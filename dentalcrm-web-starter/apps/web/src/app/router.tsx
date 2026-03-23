@@ -56,6 +56,12 @@ const PublicBookingPage = lazy(() =>
 const ClinicRegistrationPage = lazy(() =>
   import('@/modules/onboarding/pages/ClinicRegistrationPage').then((module) => ({ default: module.ClinicRegistrationPage })),
 );
+const QuotesPage = lazy(() =>
+  import('@/modules/quotes/pages/QuotesPage').then((module) => ({ default: module.QuotesPage })),
+);
+const TelemedicinePage = lazy(() =>
+  import('@/modules/telemedicine/pages/TelemedicinePage').then((module) => ({ default: module.TelemedicinePage })),
+);
 
 function LazySection({ children }: { children: ReactNode }) {
   return (
@@ -282,6 +288,26 @@ export function AppRouter() {
             <ProtectedRoute requiredRoles={['admin', 'manager', 'owner', 'super-admin', 'administrador']}>
               <LazySection>
                 <SettingsPage />
+              </LazySection>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quotes"
+          element={
+            <ProtectedRoute requiredRoles={['admin', 'manager', 'owner', 'super-admin', 'administrador']}>
+              <LazySection>
+                <QuotesPage />
+              </LazySection>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/telemedicine"
+          element={
+            <ProtectedRoute requiredRoles={['admin', 'manager', 'owner', 'super-admin', 'administrador']}>
+              <LazySection>
+                <TelemedicinePage />
               </LazySection>
             </ProtectedRoute>
           }

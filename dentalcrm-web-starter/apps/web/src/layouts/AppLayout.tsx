@@ -4,20 +4,48 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { clearAuthSession, getAuthUser, getUserRole, isAdminUser } from '@/shared/auth/session';
 import { fetchClinicSettings, logout } from '@/shared/api/resources';
 
-const links = [
-  { to: '/dashboard', label: 'Resumen' },
-  { to: '/patients', label: 'Pacientes' },
-  { to: '/appointments', label: 'Agenda' },
-  { to: '/documents', label: 'Documentos' },
-  { to: '/finance', label: 'Finanzas', adminOnly: true },
-  { to: '/reports', label: 'Indicadores', adminOnly: true },
-  { to: '/communications', label: 'Comunicaciones', adminOnly: true },
-  { to: '/operations', label: 'Operaciones', adminOnly: true },
-  { to: '/ecosystem', label: 'Integraciones', adminOnly: true },
-  { to: '/compliance', label: 'Privacidad', adminOnly: true },
-  { to: '/staff', label: 'Equipo', adminOnly: true },
-  { to: '/settings', label: 'Clinica', adminOnly: true },
+type NavLink = { to: string; label: string; adminOnly?: boolean };
+type NavGroup = { group: string; items: NavLink[] };
+
+const navGroups: NavGroup[] = [
+  {
+    group: 'General',
+    items: [
+      { to: '/dashboard', label: 'Resumen' },
+      { to: '/patients', label: 'Pacientes' },
+      { to: '/appointments', label: 'Agenda' },
+      { to: '/documents', label: 'Documentos' },
+    ],
+  },
+  {
+    group: 'Clinica',
+    items: [
+      { to: '/finance', label: 'Finanzas', adminOnly: true },
+      { to: '/quotes', label: 'Presupuestos', adminOnly: true },
+      { to: '/telemedicine', label: 'Telemedicina', adminOnly: true },
+      { to: '/communications', label: 'Comunicaciones', adminOnly: true },
+    ],
+  },
+  {
+    group: 'Gestion',
+    items: [
+      { to: '/operations', label: 'Operaciones', adminOnly: true },
+      { to: '/reports', label: 'Indicadores', adminOnly: true },
+      { to: '/staff', label: 'Equipo', adminOnly: true },
+      { to: '/settings', label: 'Clinica', adminOnly: true },
+    ],
+  },
+  {
+    group: 'Sistema',
+    items: [
+      { to: '/ecosystem', label: 'Integraciones', adminOnly: true },
+      { to: '/compliance', label: 'Privacidad', adminOnly: true },
+    ],
+  },
 ];
+
+// Flat list for mobile nav
+const links = navGroups.flatMap((g) => g.items);
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -58,6 +86,12 @@ export function AppLayout() {
     return links.filter((link) => !link.adminOnly || isAdminUser());
   }, []);
 
+  const visibleGroups = useMemo(() => {
+    return navGroups
+      .map((g) => ({ ...g, items: g.items.filter((l) => !l.adminOnly || isAdminUser()) }))
+      .filter((g) => g.items.length > 0);
+  }, []);
+
   return (
     <div className="min-h-screen text-slate-900">
       <div className="flex min-h-screen w-full flex-col gap-4 px-3 py-3 md:px-4 md:py-4 xl:grid xl:grid-cols-[320px_minmax(0,1fr)]" style={styleVars}>
@@ -75,21 +109,30 @@ export function AppLayout() {
               </div>
             </div>
 
-            <nav className="mt-6 space-y-2">
-              {visibleLinks.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className={({ isActive }) =>
-                    `block rounded-[1.1rem] px-4 py-3 text-sm font-semibold transition ${
-                      isActive
-                        ? 'bg-white text-slate-950 shadow-[0_14px_28px_rgba(15,23,42,0.16)]'
-                        : 'text-white/72 hover:bg-white/8 hover:text-white'
-                    }`
-                  }
-                >
-                  {link.label}
-                </NavLink>
+            <nav className="mt-6 space-y-4">
+              {visibleGroups.map((group) => (
+                <div key={group.group}>
+                  <p className="mb-1.5 px-4 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/40">
+                    {group.group}
+                  </p>
+                  <div className="space-y-0.5">
+                    {group.items.map((link) => (
+                      <NavLink
+                        key={link.to}
+                        to={link.to}
+                        className={({ isActive }) =>
+                          `block rounded-[1.1rem] px-4 py-2.5 text-sm font-semibold transition ${
+                            isActive
+                              ? 'bg-white text-slate-950 shadow-[0_14px_28px_rgba(15,23,42,0.16)]'
+                              : 'text-white/72 hover:bg-white/8 hover:text-white'
+                          }`
+                        }
+                      >
+                        {link.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
               ))}
             </nav>
 

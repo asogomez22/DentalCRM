@@ -20,6 +20,8 @@ use App\Http\Controllers\EcosystemController;
 use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\PublicClinicController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\TelemedicineController;
 use App\Http\Middleware\AuditApiActivity;
 use App\Http\Middleware\EnsurePortalPatient;
 use App\Http\Middleware\SetClinicContext;
@@ -87,6 +89,18 @@ Route::prefix('v1')->middleware(SetClinicContext::class)->group(function () {
         Route::get('/ecosystem/webhooks', [EcosystemController::class, 'webhooks']);
         Route::post('/ecosystem/webhooks', [EcosystemController::class, 'storeWebhook']);
         Route::delete('/ecosystem/webhooks/{webhookSubscription}', [EcosystemController::class, 'deleteWebhook']);
+
+        // Quotes (presupuestos)
+        Route::apiResource('quotes', QuoteController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+        Route::post('/quotes/{quote}/send', [QuoteController::class, 'send']);
+        Route::post('/quotes/{quote}/accept', [QuoteController::class, 'accept']);
+        Route::post('/quotes/{quote}/reject', [QuoteController::class, 'reject']);
+
+        // Telemedicine
+        Route::apiResource('telemedicine', TelemedicineController::class)->only(['index', 'show', 'store', 'update']);
+        Route::post('/telemedicine/{session}/start', [TelemedicineController::class, 'start']);
+        Route::post('/telemedicine/{session}/end', [TelemedicineController::class, 'end']);
+        Route::post('/telemedicine/{session}/cancel', [TelemedicineController::class, 'cancel']);
 
         Route::get('/compliance/audit-logs', [ComplianceController::class, 'auditLogs']);
         Route::get('/compliance/consents', [ComplianceController::class, 'consents']);

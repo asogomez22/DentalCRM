@@ -10,6 +10,8 @@ import type { CommunicationCampaign, CommunicationLog, CommunicationTemplate } f
 import type { AuditLog, ConsentRecord, PatientReferral, PatientReview, PrivacyRequest } from '@/shared/types/compliance';
 import type { GeneratedApiKey, IntegrationProvider, WebhookSubscription } from '@/shared/types/ecosystem';
 import type { Location, InventoryItem, InventorySummary, PurchaseOrder, StockMovement, Supplier } from '@/shared/types/operations';
+import type { Quote, QuoteCreatePayload, QuoteUpdatePayload } from '@/shared/types/quote';
+import type { TelemedicineSession, TelemedicineCreatePayload, TelemedicineUpdatePayload } from '@/shared/types/telemedicine';
 import type {
   PatientPortalAuthResponse,
   PatientPortalLoginPayload,
@@ -736,4 +738,82 @@ export async function createPatientPortalPrivacyRequest(payload: { type: string;
 export async function fetchPatientPortalConsents(): Promise<ConsentRecord[]> {
   const response = await portalApi.get('/portal/consents');
   return normalizeList<ConsentRecord>(response.data);
+}
+
+// ── Quotes (Presupuestos) ──────────────────────────────────────────────────
+
+export async function fetchQuotes(params?: { status?: string; patient_id?: number; search?: string }): Promise<Quote[]> {
+  const response = await api.get('/quotes', { params: sanitizeParams(params ?? {}) });
+  return normalizeList<Quote>(response.data);
+}
+
+export async function fetchQuote(id: number): Promise<Quote> {
+  const response = await api.get(`/quotes/${id}`);
+  return normalizeData<Quote>(response.data);
+}
+
+export async function createQuote(payload: QuoteCreatePayload): Promise<Quote> {
+  const response = await api.post('/quotes', payload);
+  return normalizeData<Quote>(response.data);
+}
+
+export async function updateQuote(id: number, payload: QuoteUpdatePayload): Promise<Quote> {
+  const response = await api.put(`/quotes/${id}`, payload);
+  return normalizeData<Quote>(response.data);
+}
+
+export async function sendQuote(id: number): Promise<Quote> {
+  const response = await api.post(`/quotes/${id}/send`);
+  return normalizeData<Quote>(response.data);
+}
+
+export async function acceptQuote(id: number, acceptedItemIds?: number[]): Promise<Quote> {
+  const response = await api.post(`/quotes/${id}/accept`, { accepted_item_ids: acceptedItemIds ?? [] });
+  return normalizeData<Quote>(response.data);
+}
+
+export async function rejectQuote(id: number): Promise<Quote> {
+  const response = await api.post(`/quotes/${id}/reject`);
+  return normalizeData<Quote>(response.data);
+}
+
+export async function deleteQuote(id: number): Promise<void> {
+  await api.delete(`/quotes/${id}`);
+}
+
+// ── Telemedicine ───────────────────────────────────────────────────────────
+
+export async function fetchTelemedicineSessions(params?: { status?: string; patient_id?: number; dentist_id?: number }): Promise<TelemedicineSession[]> {
+  const response = await api.get('/telemedicine', { params: sanitizeParams(params ?? {}) });
+  return normalizeList<TelemedicineSession>(response.data);
+}
+
+export async function fetchTelemedicineSession(id: number): Promise<TelemedicineSession> {
+  const response = await api.get(`/telemedicine/${id}`);
+  return normalizeData<TelemedicineSession>(response.data);
+}
+
+export async function createTelemedicineSession(payload: TelemedicineCreatePayload): Promise<TelemedicineSession> {
+  const response = await api.post('/telemedicine', payload);
+  return normalizeData<TelemedicineSession>(response.data);
+}
+
+export async function updateTelemedicineSession(id: number, payload: TelemedicineUpdatePayload): Promise<TelemedicineSession> {
+  const response = await api.put(`/telemedicine/${id}`, payload);
+  return normalizeData<TelemedicineSession>(response.data);
+}
+
+export async function startTelemedicineSession(id: number): Promise<TelemedicineSession> {
+  const response = await api.post(`/telemedicine/${id}/start`);
+  return normalizeData<TelemedicineSession>(response.data);
+}
+
+export async function endTelemedicineSession(id: number, notes?: string): Promise<TelemedicineSession> {
+  const response = await api.post(`/telemedicine/${id}/end`, { notes });
+  return normalizeData<TelemedicineSession>(response.data);
+}
+
+export async function cancelTelemedicineSession(id: number): Promise<TelemedicineSession> {
+  const response = await api.post(`/telemedicine/${id}/cancel`);
+  return normalizeData<TelemedicineSession>(response.data);
 }

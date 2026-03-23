@@ -401,6 +401,129 @@ export function EcosystemPage() {
           </div>
         </div>
       </div>
+
+      {/* Marketplace */}
+      <div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-950">Marketplace de integraciones</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Add-ons certificados de terceros. Instalacion en un click, modelo revenue-share 70/30.
+            </p>
+          </div>
+          <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700">
+            Proximo
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {MARKETPLACE_ADDONS.map((addon) => (
+            <div
+              key={addon.id}
+              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{addon.icon}</span>
+                  <div>
+                    <p className="font-semibold text-slate-950">{addon.name}</p>
+                    <p className="text-xs text-slate-500">{addon.author}</p>
+                  </div>
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    addon.available
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {addon.available ? 'Disponible' : 'En desarrollo'}
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm text-slate-600 leading-relaxed">{addon.description}</p>
+
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-800">{addon.price}</p>
+                <button
+                  type="button"
+                  disabled={!addon.available}
+                  className="rounded-xl bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400"
+                >
+                  {addon.available ? 'Instalar' : 'Notificarme'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+          <p className="text-sm font-semibold text-slate-700">¿Eres desarrollador?</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Publica tu integracion en el marketplace y gana el 70% de cada venta.{' '}
+            <a href="#" className="font-semibold text-teal-600 hover:underline">
+              Ver documentacion de la API
+            </a>
+          </p>
+        </div>
+      </div>
     </section>
   );
 }
+
+const MARKETPLACE_ADDONS = [
+  {
+    id: 'scanner-3shape',
+    name: '3Shape Connector',
+    author: 'DentalTech Labs',
+    icon: '🦷',
+    description: 'Sincroniza escaneos intraorales 3Shape directamente con la ficha del paciente en DentalCRM.',
+    price: '29€/mes',
+    available: false,
+  },
+  {
+    id: 'lab-connect',
+    name: 'LabConnect',
+    author: 'LabConnect SL',
+    icon: '🔬',
+    description: 'Envia pedidos al laboratorio dental desde la agenda y recibe notificaciones de entrega.',
+    price: '19€/mes',
+    available: false,
+  },
+  {
+    id: 'invisalign-portal',
+    name: 'Invisalign Portal',
+    author: 'Align Technology',
+    icon: '😁',
+    description: 'Accede al portal de Invisalign desde DentalCRM, seguimiento de casos y aprobaciones.',
+    price: 'Gratuito',
+    available: false,
+  },
+  {
+    id: 'sms-marketing',
+    name: 'SMS Pro',
+    author: 'MobiCom',
+    icon: '📱',
+    description: 'Envio masivo de SMS con alta entregabilidad y plantillas especializadas para dentistas.',
+    price: '0.04€/SMS',
+    available: true,
+  },
+  {
+    id: 'whatsapp-oficial',
+    name: 'WhatsApp Business API',
+    author: 'DentalCRM',
+    icon: '💬',
+    description: 'Conversaciones de WhatsApp directamente desde el CRM con templates aprobados por Meta.',
+    price: '39€/mes',
+    available: true,
+  },
+  {
+    id: 'google-reviews',
+    name: 'Google Reviews Auto',
+    author: 'ReviewBoost',
+    icon: '⭐',
+    description: 'Solicita resenas de Google automaticamente tras cada visita completada. Aumenta tu puntuacion.',
+    price: '15€/mes',
+    available: false,
+  },
+];
