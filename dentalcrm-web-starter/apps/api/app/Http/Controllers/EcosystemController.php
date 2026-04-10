@@ -143,7 +143,7 @@ class EcosystemController extends Controller
         return response()->json([
             'openapi' => '3.0.0',
             'info' => [
-                'title' => 'DentalCRM Public API',
+                'title' => 'MaxilArt Public API',
                 'version' => '1.0.0',
             ],
             'paths' => [

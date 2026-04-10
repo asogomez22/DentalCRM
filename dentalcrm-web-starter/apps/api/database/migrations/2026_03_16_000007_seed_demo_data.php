@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Hash;
 return new class extends Migration {
     public function up(): void
     {
-        $clinicId = DB::table('clinics')->where('slug', 'clinica-demo')->value('id');
+        $clinicId = DB::table('clinics')->where('slug', 'maxilart')->value('id');
 
         if (!$clinicId) {
             $clinicId = DB::table('clinics')->insertGetId([
-                'name' => 'Clinica Demo',
-                'slug' => 'clinica-demo',
-                'domain' => 'clinica-demo.local',
+                'name' => 'MaxilArt',
+                'slug' => 'maxilart',
+                'domain' => 'maxilart.local',
                 'plan' => 'starter',
                 'is_active' => true,
                 'created_at' => Carbon::now(),
@@ -25,13 +25,18 @@ return new class extends Migration {
         DB::table('clinic_settings')->updateOrInsert(
             ['clinic_id' => $clinicId],
             [
-                'brand_name' => 'Clinica Demo',
+                'brand_name' => 'MaxilArt',
                 'primary_color' => '#0f766e',
                 'secondary_color' => '#0f172a',
-                'public_phone' => '+34 000 000 000',
-                'public_email' => 'info@clinica-demo.local',
+                'public_phone' => '+34 910 820 430',
+                'public_email' => 'hola@maxilart.example',
                 'booking_enabled' => true,
-                'settings_json' => json_encode([]),
+                'settings_json' => json_encode([
+                    'website' => [
+                        'hero_title' => 'MaxilArt',
+                        'hero_copy' => 'Cirugia oral, implantologia y estetica dental con seguimiento digital, reserva online y area privada para pacientes.',
+                    ],
+                ]),
                 'logo_url' => null,
                 'updated_at' => Carbon::now(),
                 'created_at' => Carbon::now(),
@@ -39,9 +44,9 @@ return new class extends Migration {
         );
 
         DB::table('users')->updateOrInsert(
-            ['clinic_id' => $clinicId, 'email' => 'admin@clinica.com'],
+            ['clinic_id' => $clinicId, 'email' => 'direccion@maxilart.example'],
             [
-                'name' => 'Administrador',
+                'name' => 'Dra. Clara Vega',
                 'password' => Hash::make('secret'),
                 'role' => 'admin',
                 'is_active' => true,
@@ -51,9 +56,9 @@ return new class extends Migration {
         );
 
         DB::table('users')->updateOrInsert(
-            ['clinic_id' => $clinicId, 'email' => 'dentista@clinica.com'],
+            ['clinic_id' => $clinicId, 'email' => 'dr.hugo.ortega@maxilart.example'],
             [
-                'name' => 'Dentista Demo',
+                'name' => 'Dr. Hugo Ortega',
                 'password' => Hash::make('secret'),
                 'role' => 'dentist',
                 'is_active' => true,
@@ -63,9 +68,9 @@ return new class extends Migration {
         );
 
         foreach ([
-            ['Consulta', 30, 3000, true],
-            ['Limpieza', 45, 4500, true],
-            ['Ortodoncia', 60, 7500, true],
+            ['Primera valoracion', 45, 6500, true],
+            ['Higiene avanzada', 60, 8900, true],
+            ['Diseno de sonrisa', 90, 15000, true],
         ] as [$name, $duration, $price, $isActive]) {
             DB::table('treatments')->updateOrInsert(
                 ['clinic_id' => $clinicId, 'name' => $name],
@@ -82,7 +87,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        $clinicId = DB::table('clinics')->where('slug', 'clinica-demo')->value('id');
+        $clinicId = DB::table('clinics')->where('slug', 'maxilart')->value('id');
         if (!$clinicId) {
             return;
         }

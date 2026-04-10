@@ -29,6 +29,11 @@ class SetClinicContext
 
         $clinicSlug = trim(strtolower($clinicSlug));
 
+        // Compatibilidad con la demo antigua renombrada a MaxilArt.
+        if ($clinicSlug === 'clinica-demo') {
+            $clinicSlug = 'maxilart';
+        }
+
         $clinic = Clinic::query()
             ->where(function ($query) use ($clinicSlug) {
                 $query->where('slug', $clinicSlug)->orWhere('domain', $clinicSlug);

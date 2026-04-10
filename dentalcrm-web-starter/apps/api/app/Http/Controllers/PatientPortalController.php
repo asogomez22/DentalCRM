@@ -311,14 +311,19 @@ class PatientPortalController extends Controller
             ->firstOrCreate(
                 ['clinic_id' => $clinicId],
                 [
-                    'brand_name' => 'Clinica Demo',
+                    'brand_name' => 'MaxilArt',
                     'primary_color' => '#0f766e',
                     'secondary_color' => '#0f172a',
                     'logo_url' => null,
-                    'public_phone' => null,
-                    'public_email' => null,
+                    'public_phone' => '+34 910 820 430',
+                    'public_email' => 'hola@maxilart.example',
                     'booking_enabled' => true,
-                    'settings_json' => [],
+                    'settings_json' => [
+                        'website' => [
+                            'hero_title' => 'MaxilArt',
+                            'hero_copy' => 'Cirugia oral, implantologia y estetica dental con seguimiento digital, reserva online y area privada para pacientes.',
+                        ],
+                    ],
                 ],
             );
 

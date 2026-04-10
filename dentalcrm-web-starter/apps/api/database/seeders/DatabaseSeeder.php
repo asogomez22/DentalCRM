@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -17,13 +16,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $clinicId = DB::table('clinics')->where('slug', 'clinica-demo')->value('id');
+        $clinicId = DB::table('clinics')->where('slug', 'maxilart')->value('id');
 
         if (!$clinicId) {
             $clinicId = DB::table('clinics')->insertGetId([
-                'name' => 'Clinica Demo',
-                'slug' => 'clinica-demo',
-                'domain' => 'clinica-demo.local',
+                'name' => 'MaxilArt',
+                'slug' => 'maxilart',
+                'domain' => 'maxilart.local',
                 'plan' => 'starter',
                 'is_active' => true,
                 'created_at' => now(),
@@ -32,9 +31,9 @@ class DatabaseSeeder extends Seeder
         }
 
         DB::table('users')->updateOrInsert(
-            ['clinic_id' => $clinicId, 'email' => 'test@example.com'],
+            ['clinic_id' => $clinicId, 'email' => 'coordinacion@maxilart.example'],
             [
-                'name' => 'Test User',
+                'name' => 'Equipo MaxilArt',
                 'password' => Hash::make('password'),
                 'role' => 'dentist',
                 'is_active' => true,

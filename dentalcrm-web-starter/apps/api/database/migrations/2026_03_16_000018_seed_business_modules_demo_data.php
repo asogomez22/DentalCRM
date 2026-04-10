@@ -7,24 +7,24 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up(): void
     {
-        $clinic = DB::table('clinics')->where('slug', 'clinica-demo')->first();
+        $clinic = DB::table('clinics')->where('slug', 'maxilart')->first();
 
         if (!$clinic) {
             return;
         }
 
-        $patient = DB::table('patients')->where('clinic_id', $clinic->id)->where('email', 'maria.garcia@demo.local')->first();
-        $dentist = DB::table('users')->where('clinic_id', $clinic->id)->where('email', 'dentista@clinica.com')->first();
+        $patient = DB::table('patients')->where('clinic_id', $clinic->id)->where('email', 'elena.marquez@maxilart.example')->first();
+        $dentist = DB::table('users')->where('clinic_id', $clinic->id)->where('email', 'dr.hugo.ortega@maxilart.example')->first();
         $appointment = DB::table('appointments')->where('clinic_id', $clinic->id)->where('patient_id', $patient?->id)->first();
 
-        $locationId = DB::table('locations')->where('clinic_id', $clinic->id)->where('name', 'Sede Centro')->value('id');
+        $locationId = DB::table('locations')->where('clinic_id', $clinic->id)->where('name', 'MaxilArt Chamberi')->value('id');
         if (!$locationId) {
             $locationId = DB::table('locations')->insertGetId([
                 'clinic_id' => $clinic->id,
-                'name' => 'Sede Centro',
-                'address' => 'Calle Mayor 123, Madrid',
-                'phone' => '+34 910 000 000',
-                'email' => 'centro@clinica-demo.local',
+                'name' => 'MaxilArt Chamberi',
+                'address' => 'Avenida del Arte 24, Madrid',
+                'phone' => '+34 910 820 430',
+                'email' => 'chamberi@maxilart.example',
                 'is_active' => true,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -39,28 +39,28 @@ return new class extends Migration {
         }
 
         DB::table('communication_templates')->updateOrInsert(
-            ['clinic_id' => $clinic->id, 'name' => 'Recordatorio 48h'],
+            ['clinic_id' => $clinic->id, 'name' => 'Recordatorio preconsulta'],
             [
                 'channel' => 'email',
                 'category' => 'appointment_reminder',
-                'subject' => 'Recordatorio de cita',
-                'body' => 'Hola {{first_name}}, te recordamos tu proxima cita en {{date}}.',
+                'subject' => 'Tu cita en MaxilArt',
+                'body' => 'Hola {{first_name}}, te recordamos tu proxima cita en MaxilArt el {{date}}.',
                 'is_active' => true,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
         );
 
-        $campaignId = DB::table('communication_campaigns')->where('clinic_id', $clinic->id)->where('name', 'Reactivacion pacientes inactivos')->value('id');
+        $campaignId = DB::table('communication_campaigns')->where('clinic_id', $clinic->id)->where('name', 'Seguimiento de primeras visitas')->value('id');
         if (!$campaignId) {
             $campaignId = DB::table('communication_campaigns')->insertGetId([
                 'clinic_id' => $clinic->id,
-                'name' => 'Reactivacion pacientes inactivos',
+                'name' => 'Seguimiento de primeras visitas',
                 'channel' => 'email',
                 'segment' => 'inactive_patients',
                 'status' => 'draft',
-                'subject' => 'Te esperamos de nuevo',
-                'body' => 'Hola {{first_name}}, queremos ayudarte a retomar tu seguimiento dental.',
+                'subject' => 'Continuamos con tu plan',
+                'body' => 'Hola {{first_name}}, en MaxilArt queremos acompanarte en tu siguiente paso del tratamiento.',
                 'metrics_json' => json_encode([]),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -69,14 +69,14 @@ return new class extends Migration {
 
         if ($patient) {
             DB::table('communication_logs')->updateOrInsert(
-                ['clinic_id' => $clinic->id, 'patient_id' => $patient->id, 'subject' => 'Mensaje de bienvenida al portal'],
+                ['clinic_id' => $clinic->id, 'patient_id' => $patient->id, 'subject' => 'Bienvenida a tu area privada'],
                 [
                     'appointment_id' => $appointment?->id,
                     'campaign_id' => $campaignId,
                     'channel' => 'portal',
                     'direction' => 'outbound',
                     'status' => 'sent',
-                    'body' => 'Bienvenida al portal del paciente. Desde aqui podras revisar tu documentacion y comunicarte con la clinica.',
+                    'body' => 'Bienvenida al area privada de MaxilArt. Desde aqui podras revisar tu documentacion y escribirnos cuando lo necesites.',
                     'sent_at' => Carbon::now()->subHours(4),
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
@@ -87,7 +87,7 @@ return new class extends Migration {
                 ['clinic_id' => $clinic->id, 'patient_id' => $patient->id, 'rating' => 5],
                 [
                     'appointment_id' => $appointment?->id,
-                    'comment' => 'Atencion excelente y proceso de reserva muy claro.',
+                    'comment' => 'Trato impecable y explicaciones muy claras en cada visita.',
                     'status' => 'published',
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
@@ -95,12 +95,12 @@ return new class extends Migration {
             );
 
             DB::table('patient_referrals')->updateOrInsert(
-                ['clinic_id' => $clinic->id, 'referral_code' => 'MARIA100'],
+                ['clinic_id' => $clinic->id, 'referral_code' => 'ELENA100'],
                 [
                     'referrer_patient_id' => $patient->id,
-                    'referred_name' => 'Carlos Ortega',
-                    'referred_email' => 'carlos.ortega@example.com',
-                    'referred_phone' => '+34600111223',
+                    'referred_name' => 'Diego Pastor',
+                    'referred_email' => 'diego.pastor@maxilart.example',
+                    'referred_phone' => '+34 611 208 441',
                     'status' => 'invited',
                     'reward_points' => 100,
                     'created_at' => Carbon::now(),
@@ -112,7 +112,7 @@ return new class extends Migration {
                 ['clinic_id' => $clinic->id, 'patient_id' => $patient->id, 'type' => 'data_processing'],
                 [
                     'status' => 'signed',
-                    'signature_name' => 'Maria Garcia',
+                    'signature_name' => 'Elena Marquez',
                     'ip_address' => '127.0.0.1',
                     'signed_at' => Carbon::now()->subDays(5),
                     'retention_until' => Carbon::now()->addYears(5)->toDateString(),
@@ -126,7 +126,7 @@ return new class extends Migration {
                 ['clinic_id' => $clinic->id, 'patient_id' => $patient->id, 'type' => 'export'],
                 [
                     'status' => 'requested',
-                    'notes' => 'Solicitud demo de exportacion de datos.',
+                    'notes' => 'Solicitud inicial de exportacion de historial clinico.',
                     'requested_at' => Carbon::now()->subDay(),
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
@@ -141,33 +141,33 @@ return new class extends Migration {
             ]);
         }
 
-        $supplierId = DB::table('suppliers')->where('clinic_id', $clinic->id)->where('name', 'Dental Supply Demo')->value('id');
+        $supplierId = DB::table('suppliers')->where('clinic_id', $clinic->id)->where('name', 'Arcadia Dental Supply')->value('id');
         if (!$supplierId) {
             $supplierId = DB::table('suppliers')->insertGetId([
                 'clinic_id' => $clinic->id,
-                'name' => 'Dental Supply Demo',
-                'contact_name' => 'Lucia Proveedor',
-                'email' => 'pedidos@dentalsupply.local',
-                'phone' => '+34 910 111 222',
-                'notes' => 'Proveedor demo para stock.',
+                'name' => 'Arcadia Dental Supply',
+                'contact_name' => 'Sonia Bernal',
+                'email' => 'pedidos@arcadiadental.example',
+                'phone' => '+34 910 555 220',
+                'notes' => 'Proveedor principal de consumibles y escaneado.',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
         }
 
-        $inventoryItemId = DB::table('inventory_items')->where('clinic_id', $clinic->id)->where('name', 'Guantes de nitrilo')->value('id');
+        $inventoryItemId = DB::table('inventory_items')->where('clinic_id', $clinic->id)->where('name', 'Guantes de nitrilo talla M')->value('id');
         if (!$inventoryItemId) {
             $inventoryItemId = DB::table('inventory_items')->insertGetId([
                 'clinic_id' => $clinic->id,
                 'supplier_id' => $supplierId,
                 'location_id' => $locationId,
-                'sku' => 'GNT-001',
-                'name' => 'Guantes de nitrilo',
+                'sku' => 'GNT-MAX-001',
+                'name' => 'Guantes de nitrilo talla M',
                 'category' => 'consumibles',
                 'unit' => 'caja',
                 'stock_quantity' => 120,
-                'reorder_level' => 50,
-                'unit_cost_cents' => 350,
+                'reorder_level' => 40,
+                'unit_cost_cents' => 420,
                 'valuation_method' => 'average',
                 'is_active' => true,
                 'created_at' => Carbon::now(),
@@ -176,13 +176,13 @@ return new class extends Migration {
         }
 
         DB::table('stock_movements')->updateOrInsert(
-            ['clinic_id' => $clinic->id, 'inventory_item_id' => $inventoryItemId, 'reference_type' => 'seed_demo'],
+            ['clinic_id' => $clinic->id, 'inventory_item_id' => $inventoryItemId, 'reference_type' => 'seed_maxilart'],
             [
                 'type' => 'purchase',
                 'quantity' => 120,
-                'unit_cost_cents' => 350,
+                'unit_cost_cents' => 420,
                 'reference_id' => 1,
-                'notes' => 'Carga inicial demo',
+                'notes' => 'Carga inicial de apertura.',
                 'moved_at' => Carbon::now()->subDays(3),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -193,7 +193,7 @@ return new class extends Migration {
             ['clinic_id' => $clinic->id, 'provider' => 'stripe'],
             [
                 'status' => 'configured',
-                'settings_json' => json_encode(['mode' => 'test', 'account_email' => 'finance@clinica-demo.local']),
+                'settings_json' => json_encode(['mode' => 'test', 'account_email' => 'finanzas@maxilart.example']),
                 'last_sync_at' => Carbon::now()->subHours(6),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -212,10 +212,10 @@ return new class extends Migration {
         );
 
         DB::table('webhook_subscriptions')->updateOrInsert(
-            ['clinic_id' => $clinic->id, 'name' => 'Webhook demo CRM'],
+            ['clinic_id' => $clinic->id, 'name' => 'Webhook MaxilArt Hub'],
             [
-                'url' => 'https://example.com/webhooks/dentalcrm',
-                'secret' => 'demo-secret',
+                'url' => 'https://example.com/webhooks/maxilart',
+                'secret' => 'maxilart-sync-key',
                 'events_json' => json_encode(['patient.created', 'invoice.paid', 'appointment.cancelled']),
                 'is_active' => true,
                 'last_triggered_at' => Carbon::now()->subHours(3),
@@ -227,24 +227,24 @@ return new class extends Migration {
 
     public function down(): void
     {
-        $clinic = DB::table('clinics')->where('slug', 'clinica-demo')->first();
+        $clinic = DB::table('clinics')->where('slug', 'maxilart')->first();
 
         if (!$clinic) {
             return;
         }
 
-        DB::table('webhook_subscriptions')->where('clinic_id', $clinic->id)->where('name', 'Webhook demo CRM')->delete();
+        DB::table('webhook_subscriptions')->where('clinic_id', $clinic->id)->where('name', 'Webhook MaxilArt Hub')->delete();
         DB::table('clinic_integrations')->where('clinic_id', $clinic->id)->whereIn('provider', ['stripe', 'zapier'])->delete();
-        DB::table('stock_movements')->where('clinic_id', $clinic->id)->where('reference_type', 'seed_demo')->delete();
-        DB::table('inventory_items')->where('clinic_id', $clinic->id)->where('name', 'Guantes de nitrilo')->delete();
-        DB::table('suppliers')->where('clinic_id', $clinic->id)->where('name', 'Dental Supply Demo')->delete();
-        DB::table('privacy_requests')->where('clinic_id', $clinic->id)->where('notes', 'Solicitud demo de exportacion de datos.')->delete();
-        DB::table('consent_records')->where('clinic_id', $clinic->id)->where('signature_name', 'Maria Garcia')->delete();
-        DB::table('patient_referrals')->where('clinic_id', $clinic->id)->where('referral_code', 'MARIA100')->delete();
-        DB::table('patient_reviews')->where('clinic_id', $clinic->id)->where('comment', 'Atencion excelente y proceso de reserva muy claro.')->delete();
-        DB::table('communication_logs')->where('clinic_id', $clinic->id)->where('subject', 'Mensaje de bienvenida al portal')->delete();
-        DB::table('communication_campaigns')->where('clinic_id', $clinic->id)->where('name', 'Reactivacion pacientes inactivos')->delete();
-        DB::table('communication_templates')->where('clinic_id', $clinic->id)->where('name', 'Recordatorio 48h')->delete();
-        DB::table('locations')->where('clinic_id', $clinic->id)->where('name', 'Sede Centro')->delete();
+        DB::table('stock_movements')->where('clinic_id', $clinic->id)->where('reference_type', 'seed_maxilart')->delete();
+        DB::table('inventory_items')->where('clinic_id', $clinic->id)->where('name', 'Guantes de nitrilo talla M')->delete();
+        DB::table('suppliers')->where('clinic_id', $clinic->id)->where('name', 'Arcadia Dental Supply')->delete();
+        DB::table('privacy_requests')->where('clinic_id', $clinic->id)->where('notes', 'Solicitud inicial de exportacion de historial clinico.')->delete();
+        DB::table('consent_records')->where('clinic_id', $clinic->id)->where('signature_name', 'Elena Marquez')->delete();
+        DB::table('patient_referrals')->where('clinic_id', $clinic->id)->where('referral_code', 'ELENA100')->delete();
+        DB::table('patient_reviews')->where('clinic_id', $clinic->id)->where('comment', 'Trato impecable y explicaciones muy claras en cada visita.')->delete();
+        DB::table('communication_logs')->where('clinic_id', $clinic->id)->where('subject', 'Bienvenida a tu area privada')->delete();
+        DB::table('communication_campaigns')->where('clinic_id', $clinic->id)->where('name', 'Seguimiento de primeras visitas')->delete();
+        DB::table('communication_templates')->where('clinic_id', $clinic->id)->where('name', 'Recordatorio preconsulta')->delete();
+        DB::table('locations')->where('clinic_id', $clinic->id)->where('name', 'MaxilArt Chamberi')->delete();
     }
 };

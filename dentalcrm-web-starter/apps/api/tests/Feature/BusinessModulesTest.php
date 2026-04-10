@@ -254,7 +254,7 @@ class BusinessModulesTest extends TestCase
 
         $this->getJson('/api/v1/openapi', $headers)
             ->assertOk()
-            ->assertJsonPath('info.title', 'DentalCRM Public API');
+            ->assertJsonPath('info.title', 'MaxilArt Public API');
 
         $this->deleteJson("/api/v1/ecosystem/webhooks/{$webhookId}", [], $headers)->assertNoContent();
     }

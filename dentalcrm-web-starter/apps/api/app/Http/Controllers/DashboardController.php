@@ -50,15 +50,18 @@ class DashboardController extends Controller
         $settings = ClinicSetting::query()->firstOrCreate(
             ['clinic_id' => $clinicId],
             [
-                'brand_name' => 'Clinica Demo',
+                'brand_name' => 'MaxilArt',
                 'primary_color' => '#0f766e',
                 'secondary_color' => '#0f172a',
+                'public_phone' => '+34 910 820 430',
+                'public_email' => 'hola@maxilart.example',
+                'booking_enabled' => true,
             ],
         );
 
         $alerts = [];
         if ($settings->booking_enabled === false) {
-            $alerts[] = 'La reserva online está desactivada para esta clinica.';
+            $alerts[] = 'La reserva online esta desactivada temporalmente para MaxilArt.';
         }
 
         if (count($alerts) === 0) {
