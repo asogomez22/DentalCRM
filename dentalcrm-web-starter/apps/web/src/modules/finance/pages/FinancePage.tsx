@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { StatCard } from '@/components/StatCard';
 import {
   createInvoice,
@@ -10,6 +11,28 @@ import {
   fetchTreatments,
 } from '@/shared/api/resources';
 import type { Invoice, InvoiceCreatePayload, PaymentCreatePayload } from '@/shared/types/invoice';
+
+function exportInvoicesCsv(invoices: Invoice[]) {
+  const headers = ['Numero', 'Paciente', 'Estado', 'Emision', 'Vencimiento', 'Total (EUR)', 'Cobrado (EUR)', 'Pendiente (EUR)'];
+  const rows = invoices.map((inv) => [
+    inv.number,
+    `${inv.patient?.first_name ?? ''} ${inv.patient?.last_name ?? ''}`.trim(),
+    invoiceStatusLabel(inv.status),
+    inv.issued_at ? new Date(inv.issued_at).toLocaleDateString('es-ES') : '',
+    inv.due_at   ? new Date(inv.due_at).toLocaleDateString('es-ES') : '',
+    (inv.total_cents / 100).toFixed(2),
+    (inv.paid_cents / 100).toFixed(2),
+    (Math.max(inv.total_cents - inv.paid_cents, 0) / 100).toFixed(2),
+  ]);
+  const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `facturas_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const currencyFormatter = new Intl.NumberFormat('es-ES', {
   style: 'currency',
@@ -323,12 +346,30 @@ export function FinancePage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-teal-700">Facturacion</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Finanzas</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Emite facturas, registra cobros y revisa lo pendiente de cada paciente.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-[var(--color-brand)]">Facturacion</p>
+          <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Finanzas</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Emite facturas, registra cobros y revisa lo pendiente de cada paciente.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:items-start">
+          <Link
+            to="/quotes"
+            className="rounded-xl border border-[var(--color-brand-soft)] bg-[var(--color-brand-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--color-brand)] hover:opacity-80"
+          >
+            Presupuestos
+          </Link>
+          <button
+            type="button"
+            onClick={() => exportInvoicesCsv(invoices)}
+            disabled={invoices.length === 0}
+            className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Exportar CSV
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -495,14 +536,14 @@ export function FinancePage() {
             <button
               type="submit"
               disabled={!invoiceCanSubmit || createInvoiceMutation.isPending}
-              className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+              className="rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
               {createInvoiceMutation.isPending ? 'Guardando...' : 'Emitir factura'}
             </button>
           </div>
 
           {createInvoiceMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(createInvoiceMutation.error as Error | undefined)?.message || 'No se pudo emitir la factura'}
             </p>
           )}
@@ -602,14 +643,14 @@ export function FinancePage() {
             <button
               type="submit"
               disabled={!paymentCanSubmit || createPaymentMutation.isPending}
-              className="w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300"
+              className="w-full rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
               {createPaymentMutation.isPending ? 'Registrando...' : 'Registrar pago'}
             </button>
           </div>
 
           {createPaymentMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(createPaymentMutation.error as Error | undefined)?.message || 'No se pudo registrar el pago'}
             </p>
           )}
@@ -644,7 +685,7 @@ export function FinancePage() {
 
               {invoicesError && (
                 <tr>
-                  <td className="px-4 py-4 text-red-600" colSpan={6}>
+                  <td className="px-4 py-4 text-rose-600" colSpan={6}>
                     {(invoicesQueryError as Error | undefined)?.message || 'No se pudieron cargar las facturas'}
                   </td>
                 </tr>
@@ -686,7 +727,7 @@ export function FinancePage() {
           <div className="space-y-3 p-5">
             {paymentsLoading && <p className="text-sm text-slate-500">Cargando pagos...</p>}
             {paymentsError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-rose-600">
                 {(paymentsQueryError as Error | undefined)?.message || 'No se pudieron cargar los pagos'}
               </p>
             )}

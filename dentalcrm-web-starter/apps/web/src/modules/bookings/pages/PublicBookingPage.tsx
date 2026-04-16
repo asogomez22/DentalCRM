@@ -11,6 +11,7 @@ import {
 import type { Dentist, Treatment } from '@/shared/types/catalog';
 import type { AvailabilitySlot } from '@/shared/types/booking';
 import { getClinicPortalPath, syncClinicSlug } from '@/shared/clinic/paths';
+import { DEFAULT_CLINIC_BRAND, DEFAULT_CLINIC_PHONE } from '@/shared/clinic/defaults';
 
 type BookingForm = {
   first_name: string;
@@ -159,7 +160,7 @@ export function PublicBookingPage() {
             <div>
               <span className="pill border-white/12 bg-white/10 text-white/80">Reserva online</span>
               <h1 className="mt-5 text-5xl leading-tight text-white md:text-6xl">
-                {clinicSettings?.brand_name || 'Reserva online'}
+                {clinicSettings?.brand_name || DEFAULT_CLINIC_BRAND}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-8 text-white/76">
                 Elige el dia y la hora que mejor te venga. Cuando termines, la clinica recibira tu solicitud de cita.
@@ -179,7 +180,7 @@ export function PublicBookingPage() {
               <div className="rounded-[1.6rem] border border-white/10 bg-white/8 p-5">
                 <p className="text-sm text-white/65">Contacto</p>
                 <p className="mt-2 text-lg font-semibold text-white">
-                  {clinicSettings?.public_phone || clinicSettings?.public_email || 'Disponible online'}
+                  {clinicSettings?.public_phone || clinicSettings?.public_email || DEFAULT_CLINIC_PHONE}
                 </p>
               </div>
               <div className="rounded-[1.6rem] border border-white/10 bg-white/8 p-5">
@@ -267,7 +268,7 @@ export function PublicBookingPage() {
                     onClick={() => setSelectedSlotKey(slot.key)}
                     className={`rounded-[1.2rem] border px-4 py-4 text-left ${
                       selectedSlotKey === slot.key
-                        ? 'border-teal-600 bg-teal-50 shadow-[0_12px_24px_rgba(15,118,110,0.12)]'
+                        ? 'border-[var(--color-brand)] bg-[var(--color-brand-soft)] shadow-[0_12px_24px_rgba(15,118,110,0.12)]'
                         : 'border-slate-300 bg-white/80 hover:bg-white'
                     }`}
                   >
@@ -346,7 +347,7 @@ export function PublicBookingPage() {
             <button
               type="submit"
               disabled={!canSubmit || bookingMutation.isPending}
-              className="mt-5 w-full rounded-[1rem] bg-slate-950 px-4 py-3.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300"
+              className="mt-5 w-full rounded-[1rem] bg-[var(--color-brand)] px-4 py-3.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
                 {bookingMutation.isPending ? 'Reservando...' : 'Reservar cita'}
               </button>
@@ -357,7 +358,7 @@ export function PublicBookingPage() {
               </p>
             )}
             {bookingMutation.isSuccess && (
-              <p className="mt-4 rounded-[1rem] border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-700">
+              <p className="mt-4 rounded-[1rem] border border-[var(--color-brand-soft)] bg-[var(--color-brand-soft)] px-4 py-3 text-sm text-[var(--color-brand)]">
                 Solicitud enviada correctamente.
               </p>
             )}

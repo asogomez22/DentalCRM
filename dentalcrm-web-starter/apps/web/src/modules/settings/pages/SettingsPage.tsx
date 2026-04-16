@@ -2,19 +2,25 @@ import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ClinicSettings } from '@/shared/types/appointment';
 import { fetchClinicSettings, updateClinicSettings } from '@/shared/api/resources';
+import {
+  DEFAULT_CLINIC_BRAND,
+  DEFAULT_CLINIC_EMAIL,
+  DEFAULT_CLINIC_HERO_COPY,
+  DEFAULT_CLINIC_PHONE,
+} from '@/shared/clinic/defaults';
 
 const defaultSettings: ClinicSettings = {
-  brand_name: 'Clinica Demo',
+  brand_name: DEFAULT_CLINIC_BRAND,
   primary_color: '#0f766e',
   secondary_color: '#0f172a',
   logo_url: '',
-  public_phone: '',
-  public_email: '',
+  public_phone: DEFAULT_CLINIC_PHONE,
+  public_email: DEFAULT_CLINIC_EMAIL,
   booking_enabled: true,
   settings_json: {
     website: {
-      hero_title: 'Clinica Demo',
-      hero_copy: 'Pide cita, revisa tus documentos y accede a tu area privada desde la misma web de la clinica.',
+      hero_title: DEFAULT_CLINIC_BRAND,
+      hero_copy: DEFAULT_CLINIC_HERO_COPY,
     },
   },
 };
@@ -79,13 +85,13 @@ export function SettingsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">White-label</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">White-label</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Clinica</h2>
       </div>
 
       {isLoading && <p className="text-sm text-slate-500">Cargando configuracion...</p>}
 
-      {isError && <p className="text-sm text-red-600">{(error as Error | undefined)?.message || 'No fue posible cargar la configuracion'}</p>}
+      {isError && <p className="text-sm text-rose-600">{(error as Error | undefined)?.message || 'No fue posible cargar la configuracion'}</p>}
 
       <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -96,7 +102,7 @@ export function SettingsPage() {
               <input
                 value={form.brand_name}
                 onChange={(event) => setForm((previous) => ({ ...previous, brand_name: event.target.value }))}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
               />
             </label>
 
@@ -125,12 +131,12 @@ export function SettingsPage() {
               <input
                 value={form.logo_url ?? ''}
                 onChange={(event) => setForm((previous) => ({ ...previous, logo_url: event.target.value }))}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm text-slate-600">Telefono public</span>
+              <span className="text-sm text-slate-600">Telefono publico</span>
               <input
                 value={form.public_phone ?? ''}
                 onChange={(event) => setForm((previous) => ({ ...previous, public_phone: event.target.value }))}
@@ -139,7 +145,7 @@ export function SettingsPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm text-slate-600">Email public</span>
+              <span className="text-sm text-slate-600">Email publico</span>
               <input
                 type="email"
                 value={form.public_email ?? ''}
@@ -202,16 +208,16 @@ export function SettingsPage() {
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+              className="rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
               {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
             </button>
             {updateMutation.isError && (
-              <p className="mt-2 text-sm text-red-600">
+              <p className="mt-2 text-sm text-rose-600">
                 {(updateMutation.error as Error | undefined)?.message || 'No se pudo guardar la configuracion'}
               </p>
             )}
-            {updateMutation.isSuccess && <p className="mt-2 text-sm text-teal-700">Configuracion guardada.</p>}
+            {updateMutation.isSuccess && <p className="mt-2 text-sm text-[var(--color-brand)]">Configuracion guardada.</p>}
           </div>
         </div>
 
@@ -228,12 +234,12 @@ export function SettingsPage() {
               />
               <div>
                 <p className="text-lg font-semibold" style={{ color: form.secondary_color || '#ffffff' }}>
-                  {form.settings_json?.website?.hero_title || form.brand_name || 'Clinica Demo'}
+                  {form.settings_json?.website?.hero_title || form.brand_name || DEFAULT_CLINIC_BRAND}
                 </p>
                 <p className="text-sm text-slate-300">
                   {form.settings_json?.website?.hero_copy || 'Reserva online y area privada del paciente'}
                 </p>
-                <p className="text-sm text-slate-300">{form.public_email || 'contacto@clinica.example'}</p>
+                <p className="text-sm text-slate-300">{form.public_email || DEFAULT_CLINIC_EMAIL}</p>
               </div>
             </div>
           </div>

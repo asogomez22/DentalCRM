@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/asogo/DentalCRM -maxdepth 1 -name \".gitignore\" -exec cat {} \\\\;)",
+      "Bash(git check-ignore:)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

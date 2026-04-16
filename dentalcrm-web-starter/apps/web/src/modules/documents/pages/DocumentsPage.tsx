@@ -129,7 +129,7 @@ export function DocumentsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Expediente digital</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Expediente digital</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Documentos</h2>
         <p className="mt-2 text-sm text-slate-500">
           Guarda consentimientos, presupuestos, radiografias y cualquier archivo del paciente.
@@ -196,14 +196,14 @@ export function DocumentsPage() {
             <button
               type="submit"
               disabled={!canSubmit || uploadMutation.isPending}
-              className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+              className="rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
               {uploadMutation.isPending ? 'Subiendo...' : 'Guardar documento'}
             </button>
           </div>
 
           {uploadMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(uploadMutation.error as Error | undefined)?.message || 'No se pudo subir el documento'}
             </p>
           )}
@@ -242,7 +242,7 @@ export function DocumentsPage() {
           <div className="mt-5 space-y-3">
             {isLoading && <p className="text-sm text-slate-500">Cargando documentos...</p>}
             {isError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-rose-600">
                 {(error as Error | undefined)?.message || 'No se pudieron cargar los documentos'}
               </p>
             )}

@@ -138,7 +138,7 @@ export function TelemedicinePage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Consultas</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Consultas</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Telemedicina</h2>
         <p className="mt-2 text-sm text-slate-500">
           Videoconsultas con pacientes sin desplazamiento. Programadas, en curso y completadas.
@@ -232,13 +232,13 @@ export function TelemedicinePage() {
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="mt-5 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+            className="mt-5 rounded-xl bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
           >
             {createMutation.isPending ? 'Programando...' : 'Programar consulta'}
           </button>
 
           {createMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">No se pudo crear la sesion.</p>
+            <p className="mt-3 text-sm text-rose-600">No se pudo crear la sesion.</p>
           )}
 
           {/* Info box */}
@@ -387,7 +387,7 @@ export function TelemedicinePage() {
               <button
                 onClick={() => endMutation.mutate({ id: endingSession.id, notes: endNotes })}
                 disabled={endMutation.isPending}
-                className="flex-1 rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+                className="flex-1 rounded-xl bg-[var(--color-brand)] py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
               >
                 {endMutation.isPending ? 'Guardando...' : 'Finalizar y guardar'}
               </button>

@@ -289,7 +289,7 @@ export function DashboardPage() {
                   <h3 className="text-xl font-semibold text-slate-950">Pulso del negocio</h3>
                   <p className="mt-0.5 text-sm text-slate-500">Indicadores clave de rendimiento.</p>
                 </div>
-                <Link to="/reports" className="text-sm font-semibold text-teal-600 hover:text-teal-700">
+                <Link to="/reports" className="text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-dark)]">
                   Ver reportes →
                 </Link>
               </div>
@@ -321,7 +321,7 @@ export function DashboardPage() {
                   <h3 className="text-xl font-semibold text-slate-950">Finanzas del mes</h3>
                   <p className="mt-0.5 text-sm text-slate-500">Cobros, vencidos y proyecciones.</p>
                 </div>
-                <Link to="/finance" className="text-sm font-semibold text-teal-600 hover:text-teal-700">
+                <Link to="/finance" className="text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-dark)]">
                   Ver finanzas →
                 </Link>
               </div>

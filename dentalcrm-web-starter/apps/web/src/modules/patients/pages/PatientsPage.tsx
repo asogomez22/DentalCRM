@@ -112,7 +112,7 @@ export function PatientsPage() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-teal-700">CRM</p>
+          <p className="text-sm font-medium text-[var(--color-brand)]">CRM</p>
           <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Pacientes</h2>
         </div>
 
@@ -121,12 +121,12 @@ export function PatientsPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar por nombre, DNI o telefono"
-            className="w-80 rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-teal-600"
+            className="w-80 rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none ring-0 transition focus:border-[var(--color-brand)]"
           />
           <button
             type="button"
             onClick={() => setFormOpen((previous) => !previous)}
-            className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700"
+            className="rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)]"
           >
             {formOpen ? 'Cerrar formulario' : 'Nuevo paciente'}
           </button>
@@ -204,7 +204,7 @@ export function PatientsPage() {
             <button
               type="submit"
               disabled={!canSubmit || createMutation.isPending || updateMutation.isPending}
-              className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+              className="rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
               {createMutation.isPending || updateMutation.isPending
                 ? 'Guardando...'
@@ -222,7 +222,7 @@ export function PatientsPage() {
           </div>
 
           {(createMutation.error || updateMutation.error) && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-rose-600">
               {(createMutation.error as Error | undefined)?.message ||
                 (updateMutation.error as Error | undefined)?.message ||
                 'No se pudo guardar el paciente'}
@@ -254,7 +254,7 @@ export function PatientsPage() {
 
             {isError && (
               <tr>
-                <td className="px-4 py-3 text-red-600" colSpan={6}>
+                <td className="px-4 py-3 text-rose-600" colSpan={6}>
                   {(patientsError as Error | undefined)?.message || 'No fue posible cargar pacientes'}
                 </td>
               </tr>

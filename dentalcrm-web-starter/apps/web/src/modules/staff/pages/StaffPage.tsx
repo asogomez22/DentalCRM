@@ -155,7 +155,7 @@ export function StaffPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Operaciones</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Operaciones</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Equipo</h2>
         <p className="mt-2 text-sm text-slate-500">
           Organiza la disponibilidad del equipo por dia, centro y franja horaria.
@@ -250,14 +250,14 @@ export function StaffPage() {
             <button
               type="submit"
               disabled={!canSubmit || createMutation.isPending}
-              className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+              className="rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
               {createMutation.isPending ? 'Guardando...' : 'Guardar horario'}
             </button>
           </div>
 
           {createMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(createMutation.error as Error | undefined)?.message || 'No se pudo guardar el horario'}
             </p>
           )}
@@ -287,7 +287,7 @@ export function StaffPage() {
           <div className="mt-5 space-y-3">
             {isLoading && <p className="text-sm text-slate-500">Cargando horarios...</p>}
             {isError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-rose-600">
                 {(error as Error | undefined)?.message || 'No se pudieron cargar los horarios'}
               </p>
             )}

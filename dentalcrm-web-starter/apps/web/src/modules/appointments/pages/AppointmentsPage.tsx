@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import type { DateSelectArg, EventClickArg, EventContentArg } from '@fullcalendar/core';
 import type { Appointment, AppointmentStatus, PatientMini } from '@/shared/types/appointment';
 import type { Patient } from '@/shared/types/patient';
 import type { Dentist, Treatment } from '@/shared/types/catalog';
@@ -103,13 +98,6 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-function formatDay(value: Date) {
-  return value.toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-}
 
 function formatTimeRange(start: string, end: string) {
   return `${new Date(start).toLocaleTimeString('es-ES', {
@@ -147,11 +135,12 @@ export function AppointmentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingAppointmentId, setEditingAppointmentId] = useState<number | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-  const [dateFilter, setDateFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('');
   const [dentistFilter, setDentistFilter] = useState<IdFilter>('');
   const [treatmentFilter, setTreatmentFilter] = useState<IdFilter>('');
   const [form, setForm] = useState<AppointmentForm>(initialForm);
+  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
+  const [currentDate, setCurrentDate] = useState(() => new Date());
 
   const queryClient = useQueryClient();
 
@@ -161,10 +150,9 @@ export function AppointmentsPage() {
     isError: appointmentsError,
     error: appointmentsRequestError,
   } = useQuery({
-    queryKey: ['appointments', { dateFilter, statusFilter, dentistFilter }],
+    queryKey: ['appointments', { statusFilter, dentistFilter }],
     queryFn: () =>
       fetchAppointments({
-        date: dateFilter || undefined,
         status: statusFilter || undefined,
         dentist_id: dentistFilter || undefined,
       }),
@@ -231,32 +219,6 @@ export function AppointmentsPage() {
     [visibleAppointments],
   );
 
-  const events = useMemo(
-    () =>
-      visibleAppointments.map((appointment: Appointment) => {
-        const treatmentName =
-          appointment.treatment_type ||
-          appointment.treatment?.name ||
-          treatmentLabel(appointment.treatment_id, treatments) ||
-          'Cita general';
-
-        return {
-          id: String(appointment.id),
-          title: toDisplayName(appointment.patient, appointment.patient_id),
-          start: appointment.starts_at,
-          end: appointment.ends_at,
-          classNames: ['calendar-appointment', `calendar-appointment--${appointment.status}`],
-          extendedProps: {
-            patientName: toDisplayName(appointment.patient, appointment.patient_id),
-            treatmentName,
-            dentistName: appointment.dentist?.name || dentistLabel(appointment.dentist_id, dentists),
-            room: appointment.room || 'Sin sala',
-          },
-        };
-      }),
-    [dentists, treatments, visibleAppointments],
-  );
-
   const selectedAppointment = useMemo(
     () => visibleAppointments.find((appointment) => appointment.id === selectedEventId) ?? null,
     [selectedEventId, visibleAppointments],
@@ -272,28 +234,109 @@ export function AppointmentsPage() {
     }
   }, [selectedEventId, visibleAppointments]);
 
-  const referenceDate = useMemo(() => {
-    if (!dateFilter) {
-      return new Date();
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setShowForm(false);
+        setSelectedEventId(null);
+        resetForm();
+      }
     }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
-    return new Date(`${dateFilter}T12:00:00`);
-  }, [dateFilter]);
+  useEffect(() => {
+    const isOpen = showForm || selectedEventId !== null;
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showForm, selectedEventId]);
 
-  const appointmentsForReferenceDay = useMemo(
-    () => sortedAppointments.filter((appointment) => isSameDay(appointment.starts_at, referenceDate)),
-    [referenceDate, sortedAppointments],
+  const today = useMemo(() => new Date(), []);
+
+  const todayCount = useMemo(
+    () => visibleAppointments.filter((apt) => isSameDay(apt.starts_at, today)).length,
+    [visibleAppointments, today],
   );
 
-  const upcomingAppointments = useMemo(() => {
+  const nextAppointment = useMemo(() => {
     const now = Date.now();
-    return sortedAppointments.filter((appointment) => new Date(appointment.ends_at).getTime() >= now).slice(0, 6);
+    return (
+      sortedAppointments.find((apt) => new Date(apt.ends_at).getTime() >= now) ?? null
+    );
   }, [sortedAppointments]);
 
-  const nextAppointment = upcomingAppointments[0] ?? null;
-  const pendingCount = visibleAppointments.filter((appointment) => appointment.status === 'pending').length;
-  const confirmedCount = visibleAppointments.filter((appointment) => appointment.status === 'confirmed').length;
-  const completedCount = visibleAppointments.filter((appointment) => appointment.status === 'completed').length;
+  const pendingCount = visibleAppointments.filter((apt) => apt.status === 'pending').length;
+  const confirmedCount = visibleAppointments.filter((apt) => apt.status === 'confirmed').length;
+  const completedCount = visibleAppointments.filter((apt) => apt.status === 'completed').length;
+
+  // Días de la semana actual (lunes → domingo)
+  const weekDays = useMemo(() => {
+    const d = new Date(currentDate);
+    const dow = d.getDay();
+    const offset = dow === 0 ? 6 : dow - 1;
+    d.setDate(d.getDate() - offset);
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(d);
+      day.setDate(d.getDate() + i);
+      return day;
+    });
+  }, [currentDate]);
+
+  // Título del calendario según vista
+  const calendarTitle = useMemo(() => {
+    if (calendarView === 'month') {
+      return currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    }
+    if (calendarView === 'week') {
+      const start = weekDays[0];
+      const end = weekDays[6];
+      if (start.getMonth() === end.getMonth()) {
+        return `${start.getDate()}–${end.getDate()} de ${end.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
+      }
+      return `${start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    }
+    return currentDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }, [calendarView, currentDate, weekDays]);
+
+  // Cuadrícula mensual: 6 semanas × 7 días (lunes como primer día)
+  const calendarDays = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDow = new Date(year, month, 1).getDay();
+    const offset = firstDow === 0 ? 6 : firstDow - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days: Date[] = [];
+    for (let i = offset - 1; i >= 0; i--) days.push(new Date(year, month, -i));
+    for (let d = 1; d <= daysInMonth; d++) days.push(new Date(year, month, d));
+    while (days.length < 42) days.push(new Date(year, month + 1, days.length - offset - daysInMonth + 1));
+    return days;
+  }, [currentDate]);
+
+  function dayKey(d: Date) {
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  // Índice de citas por día para lookup O(1)
+  const appointmentsByDay = useMemo(() => {
+    const map = new Map<string, typeof visibleAppointments>();
+    for (const apt of visibleAppointments) {
+      const d = new Date(apt.starts_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(apt);
+    }
+    for (const apts of map.values()) {
+      apts.sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+    }
+    return map;
+  }, [visibleAppointments]);
+
+  // Citas del día seleccionado (vista día)
+  const currentDayApts = useMemo(
+    () => appointmentsByDay.get(dayKey(currentDate)) ?? [],
+    [appointmentsByDay, currentDate],
+  );
 
   const canSubmit =
     Number(form.patient_id) > 0 &&
@@ -381,182 +424,154 @@ export function AppointmentsPage() {
     createMutation.mutate(payload);
   };
 
-  const renderEventContent = (info: EventContentArg) => (
-    <div className="calendar-appointment__content">
-      <p className="calendar-appointment__time">{info.timeText || 'Hora'}</p>
-      <p className="calendar-appointment__title">{String(info.event.extendedProps.patientName || info.event.title)}</p>
-      <p className="calendar-appointment__meta">{String(info.event.extendedProps.treatmentName || 'Cita')}</p>
-    </div>
-  );
-
   const renderSidePanel = () => {
     if (showForm) {
       return (
-        <form onSubmit={submitAppointment} className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                {editingAppointmentId ? 'Edicion' : 'Nueva cita'}
-              </p>
-              <h3 className="mt-2 text-2xl text-slate-950">
-                {editingAppointmentId ? 'Actualizar cita' : 'Reservar un hueco'}
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">
-                Rellena solo lo importante. El resto puede completarse mas tarde.
-              </p>
-            </div>
+        <form onSubmit={submitAppointment} className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-xl font-semibold text-slate-950">
+              {editingAppointmentId ? 'Editar cita' : 'Nueva cita'}
+            </h3>
             <button
               type="button"
-              onClick={() => {
-                setShowForm(false);
-                resetForm();
-              }}
-              className="rounded-[1rem] border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white"
+              onClick={() => { setShowForm(false); resetForm(); }}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-100"
             >
-              Cerrar
+              ✕
             </button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-2 md:col-span-2">
-              <span className="text-sm text-slate-600">Paciente</span>
-              <select
-                value={form.patient_id}
-                onChange={(event) => setForm((previous) => ({ ...previous, patient_id: Number(event.target.value) }))}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-                required
-              >
-                <option value={0}>Selecciona un paciente</option>
-                {patients.map((patient) => (
-                  <option value={patient.id} key={patient.id}>
-                    {patient.first_name} {patient.last_name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-slate-500">Paciente</span>
+            <select
+              value={form.patient_id}
+              onChange={(event) => setForm((previous) => ({ ...previous, patient_id: Number(event.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              required
+            >
+              <option value={0}>Selecciona un paciente</option>
+              {patients.map((patient) => (
+                <option value={patient.id} key={patient.id}>{patient.first_name} {patient.last_name}</option>
+              ))}
+            </select>
+          </label>
 
-            <label className="space-y-2">
-              <span className="text-sm text-slate-600">Profesional</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-slate-500">Profesional</span>
               <select
                 value={form.dentist_id}
                 onChange={(event) => setForm((previous) => ({ ...previous, dentist_id: Number(event.target.value) }))}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                 required
               >
-                <option value={0}>Selecciona un profesional</option>
+                <option value={0}>Selecciona</option>
                 {dentists.map((dentist: Dentist) => (
-                  <option value={dentist.id} key={dentist.id}>
-                    {dentist.name}
-                  </option>
+                  <option value={dentist.id} key={dentist.id}>{dentist.name}</option>
                 ))}
               </select>
             </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-slate-600">Estado</span>
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-slate-500">Estado</span>
               <select
                 value={form.status}
                 onChange={(event) => setForm((previous) => ({ ...previous, status: event.target.value as AppointmentStatus }))}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
               >
                 {appointmentStatuses.map((status) => (
-                  <option value={status.value} key={status.value}>
-                    {status.label}
-                  </option>
+                  <option value={status.value} key={status.value}>{status.label}</option>
                 ))}
               </select>
             </label>
+          </div>
 
-            <label className="space-y-2">
-              <span className="text-sm text-slate-600">Tratamiento</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-slate-500">Tratamiento</span>
               <select
                 value={form.treatment_id}
                 onChange={(event) => setForm((previous) => ({ ...previous, treatment_id: Number(event.target.value) || '' }))}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
               >
                 <option value="">Sin definir</option>
                 {treatments.map((treatment: Treatment) => (
-                  <option value={treatment.id} key={treatment.id}>
-                    {treatment.name} ({treatment.duration_minutes} min)
-                  </option>
+                  <option value={treatment.id} key={treatment.id}>{treatment.name} ({treatment.duration_minutes} min)</option>
                 ))}
               </select>
             </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-slate-600">Sala</span>
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-slate-500">Sala</span>
               <input
                 value={form.room}
                 onChange={(event) => setForm((previous) => ({ ...previous, room: event.target.value }))}
                 placeholder="Ej. Sala 1"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
               />
             </label>
+          </div>
 
-            <label className="space-y-2">
-              <span className="text-sm text-slate-600">Inicio</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-slate-500">Inicio</span>
               <input
                 type="datetime-local"
                 value={form.starts_at}
                 onChange={(event) => setForm((previous) => ({ ...previous, starts_at: event.target.value }))}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                 required
               />
             </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-slate-600">Fin</span>
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-slate-500">Fin</span>
               <input
                 type="datetime-local"
                 value={form.ends_at}
                 onChange={(event) => setForm((previous) => ({ ...previous, ends_at: event.target.value }))}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                 required
               />
             </label>
           </div>
 
-          <label className="space-y-2">
-            <span className="text-sm text-slate-600">Notas para el equipo</span>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-slate-500">Notas</span>
             <textarea
               value={form.notes}
               onChange={(event) => setForm((previous) => ({ ...previous, notes: event.target.value }))}
-              className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-              placeholder="Ej. llamar antes, confirmar presupuesto, preparar radiografia..."
+              rows={3}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              placeholder="Ej. llamar antes, confirmar presupuesto..."
             />
           </label>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             <button
               type="submit"
               disabled={!canSubmit || isSaving}
-              className="rounded-[1rem] bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+              className="rounded-xl bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
             >
-              {isSaving ? 'Guardando...' : editingAppointmentId ? 'Guardar cambios' : 'Guardar cita'}
+              {isSaving ? 'Guardando...' : editingAppointmentId ? 'Guardar cambios' : 'Crear cita'}
             </button>
             <button
               type="button"
-              onClick={() => {
-                setShowForm(false);
-                resetForm();
-              }}
-              className="rounded-[1rem] border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-white"
+              onClick={() => { setShowForm(false); resetForm(); }}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
             >
               Cancelar
             </button>
-            {editingAppointmentId && selectedAppointment ? (
+            {editingAppointmentId && selectedAppointment && (
               <button
                 type="button"
                 onClick={() => deleteMutation.mutate(editingAppointmentId)}
                 disabled={deleteMutation.isPending}
-                className="rounded-[1rem] bg-rose-600 px-4 py-3 text-sm font-semibold text-white hover:bg-rose-700 disabled:bg-rose-300"
+                className="ml-auto rounded-xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-100 disabled:opacity-50"
               >
-                {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar cita'}
+                {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
               </button>
-            ) : null}
+            )}
           </div>
 
-          {mutationError ? <p className="text-sm text-rose-700">{mutationError}</p> : null}
+          {mutationError && <p className="text-sm text-rose-600">{mutationError}</p>}
         </form>
       );
     }
@@ -570,81 +585,96 @@ export function AppointmentsPage() {
         'Cita general';
 
       return (
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.badgeClass}`}>
                 {statusMeta.label}
               </span>
-              <h3 className="mt-3 text-2xl text-slate-950">
+              <h3 className="mt-2 text-xl font-semibold text-slate-950">
                 {toDisplayName(selectedAppointment.patient, selectedAppointment.patient_id)}
               </h3>
-              <p className="mt-2 text-sm text-slate-600">{treatmentName}</p>
+              <p className="mt-1 text-sm text-slate-500">{treatmentName}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => loadFormFromAppointment(selectedAppointment)}
-              className="rounded-[1rem] bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              Editar
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => loadFormFromAppointment(selectedAppointment)}
+                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSelectedEventId(null); resetForm(); }}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Horario</p>
-              <p className="mt-2 text-sm font-semibold text-slate-950">{formatDateTime(selectedAppointment.starts_at)}</p>
-              <p className="mt-1 text-sm text-slate-600">
-                {formatTimeRange(selectedAppointment.starts_at, selectedAppointment.ends_at)}
-              </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Horario</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">{formatDateTime(selectedAppointment.starts_at)}</p>
+              <p className="text-xs text-slate-500">{formatTimeRange(selectedAppointment.starts_at, selectedAppointment.ends_at)}</p>
             </div>
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Duracion</p>
-              <p className="mt-2 text-sm font-semibold text-slate-950">
-                {getDurationLabel(selectedAppointment.starts_at, selectedAppointment.ends_at)}
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                {selectedAppointment.room ? `Sala ${selectedAppointment.room}` : 'Sala pendiente'}
-              </p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Duracion</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">{getDurationLabel(selectedAppointment.starts_at, selectedAppointment.ends_at)}</p>
+              <p className="text-xs text-slate-500">{selectedAppointment.room ? `Sala ${selectedAppointment.room}` : 'Sala pendiente'}</p>
             </div>
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Profesional</p>
-              <p className="mt-2 text-sm font-semibold text-slate-950">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Profesional</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
                 {selectedAppointment.dentist?.name || dentistLabel(selectedAppointment.dentist_id, dentists)}
               </p>
             </div>
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Cobro</p>
-              <p className="mt-2 text-sm font-semibold text-slate-950">
-                {selectedAppointment.invoice?.number || 'Sin factura asociada'}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Cobro</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {selectedAppointment.invoice?.number || 'Sin factura'}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="text-xs text-slate-500">
                 {selectedAppointment.invoice
-                  ? selectedAppointment.invoice.paid_cents >= selectedAppointment.invoice.total_cents
-                    ? 'Pagada'
-                    : 'Pendiente de cobro'
-                  : 'Se puede generar mas tarde'}
+                  ? selectedAppointment.invoice.paid_cents >= selectedAppointment.invoice.total_cents ? 'Pagada' : 'Pendiente'
+                  : 'Se genera mas tarde'}
               </p>
             </div>
           </div>
 
-          <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Notas</p>
-            <p className="mt-2 text-sm leading-7 text-slate-600">
-              {selectedAppointment.notes || 'No hay notas internas para esta cita.'}
-            </p>
-          </div>
+          {selectedAppointment.notes && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Notas</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{selectedAppointment.notes}</p>
+            </div>
+          )}
         </div>
       );
     }
 
     return (
       <div className="space-y-4">
+        {nextAppointment && (
+          <div className="rounded-[1.25rem] border border-[var(--color-brand-soft)] bg-[var(--color-brand-soft)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-brand)]">Siguiente cita</p>
+            <p className="mt-2 font-semibold text-slate-950">
+              {toDisplayName(nextAppointment.patient, nextAppointment.patient_id)}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {nextAppointment.treatment_type || nextAppointment.treatment?.name || 'Cita general'}
+            </p>
+            <p className="mt-2 text-sm font-medium text-[var(--color-brand)]">
+              {formatTimeRange(nextAppointment.starts_at, nextAppointment.ends_at)}
+            </p>
+          </div>
+        )}
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Acciones</p>
-          <h3 className="mt-2 text-2xl text-slate-950">Selecciona una cita o crea una nueva</h3>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Haz clic en una cita para ver sus datos o arrastra en el calendario para reservar un horario.
+          <h3 className="mt-2 text-xl text-slate-950">Selecciona o crea una cita</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Haz clic en una cita del calendario o de la lista para ver sus datos.
           </p>
         </div>
         <button
@@ -652,267 +682,293 @@ export function AppointmentsPage() {
           onClick={() => openCreateForm()}
           className="rounded-[1rem] bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
         >
-          Crear cita manual
+          + Nueva cita
         </button>
       </div>
     );
   };
 
   return (
-    <section className="space-y-6">
-      <div className="panel page-hero rounded-[2rem] p-6 md:p-8">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+    <section className="space-y-5">
+
+      {/* Calendario — todo integrado en una sola tarjeta */}
+      <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white">
+
+        {/* Cabecera: título + stats + nueva cita */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-5">
           <div>
-            <span className="pill pill-strong">Agenda del equipo</span>
-            <h2 className="mt-4 text-4xl text-slate-950 md:text-[3.2rem]">Citas y turnos</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-              Revisa la semana, abre una cita y haz cambios sin salir de esta pantalla.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => openCreateForm()}
-            className="rounded-[1.1rem] bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            Nueva cita
-          </button>
-        </div>
-
-        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[1.4rem] border border-white/70 bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{dateFilter ? 'Dia elegido' : 'Hoy'}</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{appointmentsForReferenceDay.length}</p>
-            <p className="mt-1 text-sm text-slate-600">{formatDay(referenceDate)}</p>
-          </div>
-          <div className="rounded-[1.4rem] border border-white/70 bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Confirmadas</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{confirmedCount}</p>
-            <p className="mt-1 text-sm text-slate-600">Listas para atender</p>
-          </div>
-          <div className="rounded-[1.4rem] border border-white/70 bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Pendientes</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{pendingCount}</p>
-            <p className="mt-1 text-sm text-slate-600">Requieren seguimiento</p>
-          </div>
-          <div className="rounded-[1.4rem] border border-white/70 bg-white/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Realizadas</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{completedCount}</p>
-            <p className="mt-1 text-sm text-slate-600">
-              {nextAppointment ? `Siguiente: ${formatTimeRange(nextAppointment.starts_at, nextAppointment.ends_at)}` : 'Sin proximas citas'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_380px]">
-        <div className="panel calendar-shell min-w-0 rounded-[2rem] p-4 md:p-5">
-          <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Filtros</p>
-              <h3 className="mt-2 text-2xl text-slate-950">Calendario</h3>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Fecha</span>
-                <input
-                  type="date"
-                  value={dateFilter}
-                  onChange={(event) => setDateFilter(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-                />
-              </label>
-              <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Estado</span>
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value as AppointmentStatusFilter)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-                >
-                  <option value="">Todos</option>
-                  {appointmentStatuses.map((status) => (
-                    <option value={status.value} key={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Profesional</span>
-                <select
-                  value={dentistFilter}
-                  onChange={(event) => setDentistFilter(Number(event.target.value) || '')}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-                >
-                  <option value="">Todo el equipo</option>
-                  {dentists.map((dentist: Dentist) => (
-                    <option value={dentist.id} key={dentist.id}>
-                      {dentist.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Tratamiento</span>
-                <select
-                  value={treatmentFilter}
-                  onChange={(event) => setTreatmentFilter(Number(event.target.value) || '')}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-                >
-                  <option value="">Todos</option>
-                  {treatments.map((treatment: Treatment) => (
-                    <option value={treatment.id} key={treatment.id}>
-                      {treatment.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
-
-          {isLoading && <p className="px-3 py-2 text-sm text-slate-500">Cargando agenda...</p>}
-
-          {appointmentsError && (
-            <p className="px-3 py-2 text-sm text-rose-700">
-              {(appointmentsRequestError as Error | undefined)?.message || 'No fue posible cargar las citas'}.
-            </p>
-          )}
-
-          {!isLoading && (
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="timeGridWeek"
-              firstDay={1}
-              locale="es"
-              allDaySlot={false}
-              selectable
-              selectMirror
-              nowIndicator
-              expandRows
-              stickyHeaderDates
-              dayMaxEventRows={3}
-              navLinks
-              slotMinTime="08:00:00"
-              slotMaxTime="20:00:00"
-              slotDuration="00:30:00"
-              slotLabelInterval="01:00"
-              height="auto"
-              events={events}
-              eventContent={renderEventContent}
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay',
-              }}
-              buttonText={{
-                today: 'Hoy',
-                month: 'Mes',
-                week: 'Semana',
-                day: 'Dia',
-              }}
-              dayHeaderFormat={{
-                weekday: 'short',
-                day: 'numeric',
-              }}
-              slotLabelFormat={{
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              }}
-              select={(selection: DateSelectArg) => {
-                if (!selection.start || !selection.end) return;
-                openCreateForm(selection.start.toISOString(), selection.end.toISOString());
-              }}
-              eventClick={(info: EventClickArg) => {
-                setSelectedEventId(Number(info.event.id));
-                setShowForm(false);
-                setEditingAppointmentId(null);
-              }}
-            />
-          )}
-
-          {treatmentFilter ? (
-            <p className="mt-4 text-sm text-slate-500">
-              Mostrando {visibleAppointments.length} citas para el tratamiento seleccionado.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-6">
-          <div className="panel rounded-[1.75rem] p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Hoy y proximamente</p>
-                <h3 className="mt-2 text-2xl text-slate-950">Proximas citas</h3>
-              </div>
-              <span className="pill">{upcomingAppointments.length} visibles</span>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {upcomingAppointments.length === 0 ? (
-                <p className="text-sm text-slate-500">No hay citas proximas con los filtros actuales.</p>
-              ) : (
-                upcomingAppointments.map((appointment) => {
-                  const statusMeta = getStatusMeta(appointment.status);
-                  const treatmentName =
-                    appointment.treatment_type ||
-                    appointment.treatment?.name ||
-                    treatmentLabel(appointment.treatment_id, treatments) ||
-                    'Cita general';
-
-                  return (
-                    <button
-                      key={appointment.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedEventId(appointment.id);
-                        setShowForm(false);
-                      }}
-                      className={`w-full rounded-[1.25rem] border px-4 py-4 text-left transition ${
-                        selectedEventId === appointment.id
-                          ? 'border-slate-950 bg-slate-950 text-white shadow-[0_18px_36px_rgba(15,23,42,0.18)]'
-                          : 'border-slate-200 bg-white/75 hover:bg-white'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold">
-                            {toDisplayName(appointment.patient, appointment.patient_id)}
-                          </p>
-                          <p
-                            className={`mt-1 text-sm ${
-                              selectedEventId === appointment.id ? 'text-white/75' : 'text-slate-600'
-                            }`}
-                          >
-                            {treatmentName}
-                          </p>
-                        </div>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            selectedEventId === appointment.id ? 'bg-white/15 text-white' : statusMeta.badgeClass
-                          }`}
-                        >
-                          {statusMeta.label}
-                        </span>
-                      </div>
-                      <p
-                        className={`mt-3 text-sm ${
-                          selectedEventId === appointment.id ? 'text-white/80' : 'text-slate-600'
-                        }`}
-                      >
-                        {formatDateTime(appointment.starts_at)}
-                      </p>
-                    </button>
-                  );
-                })
+            <h2 className="text-xl font-semibold text-slate-950">Agenda</h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm">
+              <span className="text-slate-500">Hoy <strong className="text-slate-800">{todayCount}</strong></span>
+              <span className="text-slate-200">|</span>
+              <span className="text-emerald-600"><strong>{confirmedCount}</strong> confirmadas</span>
+              <span className="text-slate-200">|</span>
+              <span className="text-amber-500"><strong>{pendingCount}</strong> pendientes</span>
+              <span className="text-slate-200">|</span>
+              <span className="text-sky-500"><strong>{completedCount}</strong> realizadas</span>
+              {nextAppointment && (
+                <>
+                  <span className="text-slate-200">|</span>
+                  <span className="text-slate-400 text-xs">Siguiente: {formatTimeRange(nextAppointment.starts_at, nextAppointment.ends_at)}</span>
+                </>
               )}
             </div>
           </div>
-
-          <div className="panel rounded-[1.75rem] p-5">{renderSidePanel()}</div>
+          <button
+            type="button"
+            onClick={() => openCreateForm()}
+            className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            + Nueva cita
+          </button>
         </div>
+
+        {/* Toolbar: navegación + selector de vista + filtros */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/40 px-6 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentDate((d) => {
+                const n = new Date(d);
+                if (calendarView === 'month') n.setMonth(n.getMonth() - 1);
+                else if (calendarView === 'week') n.setDate(n.getDate() - 7);
+                else n.setDate(n.getDate() - 1);
+                return n;
+              })}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-500 hover:bg-slate-100"
+            >
+              ‹
+            </button>
+            <h3 className="min-w-[200px] text-center text-sm font-semibold capitalize text-slate-800">
+              {calendarTitle}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setCurrentDate((d) => {
+                const n = new Date(d);
+                if (calendarView === 'month') n.setMonth(n.getMonth() + 1);
+                else if (calendarView === 'week') n.setDate(n.getDate() + 7);
+                else n.setDate(n.getDate() + 1);
+                return n;
+              })}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-500 hover:bg-slate-100"
+            >
+              ›
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentDate(new Date())}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Hoy
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filtros */}
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as AppointmentStatusFilter)}
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600">
+              <option value="">Todos los estados</option>
+              {appointmentStatuses.map((s) => <option value={s.value} key={s.value}>{s.label}</option>)}
+            </select>
+            <select value={dentistFilter} onChange={(e) => setDentistFilter(Number(e.target.value) || '')}
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600">
+              <option value="">Todo el equipo</option>
+              {dentists.map((d: Dentist) => <option value={d.id} key={d.id}>{d.name}</option>)}
+            </select>
+            <select value={treatmentFilter} onChange={(e) => setTreatmentFilter(Number(e.target.value) || '')}
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600">
+              <option value="">Tratamiento</option>
+              {treatments.map((t: Treatment) => <option value={t.id} key={t.id}>{t.name}</option>)}
+            </select>
+            {(statusFilter || dentistFilter || treatmentFilter) && (
+              <button type="button" onClick={() => { setStatusFilter(''); setDentistFilter(''); setTreatmentFilter(''); }}
+                className="text-xs text-slate-400 hover:text-slate-700">✕</button>
+            )}
+
+            {/* Selector de vista */}
+            <div className="ml-1 flex rounded-lg border border-slate-200 bg-white p-0.5">
+              {(['month', 'week', 'day'] as const).map((v) => (
+                <button key={v} type="button" onClick={() => setCalendarView(v)}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition ${
+                    calendarView === v ? 'bg-slate-950 text-white' : 'text-slate-500 hover:text-slate-800'
+                  }`}>
+                  {v === 'month' ? 'Mes' : v === 'week' ? 'Semana' : 'Día'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Estados de carga / error */}
+        {isLoading && (
+          <div className="flex items-center gap-3 px-6 py-5 text-sm text-slate-500">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-teal-600" />
+            Cargando agenda...
+          </div>
+        )}
+        {appointmentsError && (
+          <div className="m-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {(appointmentsRequestError as Error | undefined)?.message || 'No fue posible cargar las citas'}
+          </div>
+        )}
+
+        {/* ── VISTA MES ── */}
+        {!isLoading && calendarView === 'month' && (
+          <>
+            <div className="grid grid-cols-7 border-b border-slate-100">
+              {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d) => (
+                <div key={d} className="py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">{d}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7">
+              {calendarDays.map((day, i) => {
+                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                const isToday = isSameDay(day.toISOString(), today);
+                const dayApts = appointmentsByDay.get(dayKey(day)) ?? [];
+                const visible = dayApts.slice(0, 3);
+                const overflow = dayApts.length - visible.length;
+                return (
+                  <div
+                    key={i}
+                    onClick={() => { const s = new Date(day); s.setHours(9,0,0,0); const e = new Date(day); e.setHours(9,30,0,0); openCreateForm(s.toISOString(), e.toISOString()); }}
+                    className={`min-h-[110px] cursor-pointer border-b border-r border-slate-100 p-2 transition hover:bg-slate-50/70 ${!isCurrentMonth ? 'bg-slate-50/40' : ''} ${i % 7 === 6 ? 'border-r-0' : ''}`}
+                  >
+                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${isToday ? 'bg-[var(--color-brand)] text-white' : isCurrentMonth ? 'text-slate-700' : 'text-slate-300'}`}>
+                      {day.getDate()}
+                    </span>
+                    <div className="mt-1 space-y-0.5">
+                      {visible.map((apt) => (
+                        <button key={apt.id} type="button"
+                          onClick={(e) => { e.stopPropagation(); setSelectedEventId(apt.id); setShowForm(false); }}
+                          className={`flex w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-left text-[11px] font-medium leading-tight ${
+                            apt.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' :
+                            apt.status === 'pending'   ? 'bg-amber-50 text-amber-700' :
+                            apt.status === 'completed' ? 'bg-sky-50 text-sky-700' :
+                                                         'bg-rose-50 text-rose-600'}`}>
+                          <span className="shrink-0 font-semibold">{new Date(apt.starts_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="truncate">{toDisplayName(apt.patient, apt.patient_id)}</span>
+                        </button>
+                      ))}
+                      {overflow > 0 && <p className="px-1 text-[11px] text-slate-400">+{overflow} más</p>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ── VISTA SEMANA ── */}
+        {!isLoading && calendarView === 'week' && (
+          <div className="grid grid-cols-7 divide-x divide-slate-100">
+            {weekDays.map((day, i) => {
+              const isToday = isSameDay(day.toISOString(), today);
+              const dayApts = appointmentsByDay.get(dayKey(day)) ?? [];
+              return (
+                <div key={i}>
+                  <div
+                    className={`border-b border-slate-100 py-3 text-center ${isToday ? 'bg-teal-50/60' : ''}`}
+                    onClick={() => { const s = new Date(day); s.setHours(9,0,0,0); const e = new Date(day); e.setHours(9,30,0,0); openCreateForm(s.toISOString(), e.toISOString()); }}
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      {day.toLocaleDateString('es-ES', { weekday: 'short' })}
+                    </p>
+                    <span className={`mt-1 inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold ${isToday ? 'bg-[var(--color-brand)] text-white' : 'text-slate-700'}`}>
+                      {day.getDate()}
+                    </span>
+                  </div>
+                  <div className="min-h-[480px] space-y-1.5 p-2">
+                    {dayApts.length === 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => { const s = new Date(day); s.setHours(9,0,0,0); const e = new Date(day); e.setHours(9,30,0,0); openCreateForm(s.toISOString(), e.toISOString()); }}
+                        className="w-full rounded-lg border-2 border-dashed border-slate-100 py-6 text-xs text-slate-300 transition hover:border-slate-200 hover:text-slate-400"
+                      >
+                        +
+                      </button>
+                    ) : (
+                      dayApts.map((apt) => (
+                        <button key={apt.id} type="button"
+                          onClick={() => { setSelectedEventId(apt.id); setShowForm(false); }}
+                          className={`w-full rounded-xl border p-2 text-left text-xs transition hover:shadow-sm ${
+                            apt.status === 'confirmed' ? 'border-emerald-100 bg-emerald-50 text-emerald-800' :
+                            apt.status === 'pending'   ? 'border-amber-100 bg-amber-50 text-amber-800' :
+                            apt.status === 'completed' ? 'border-sky-100 bg-sky-50 text-sky-800' :
+                                                         'border-rose-100 bg-rose-50 text-rose-700'}`}>
+                          <p className="font-semibold">{new Date(apt.starts_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className="mt-0.5 truncate font-medium">{toDisplayName(apt.patient, apt.patient_id)}</p>
+                          <p className="truncate opacity-70">{apt.treatment_type || apt.treatment?.name || 'Cita'}</p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── VISTA DÍA ── */}
+        {!isLoading && calendarView === 'day' && (
+          <div className="px-6 py-5">
+            {currentDayApts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-3xl text-slate-200">○</p>
+                <p className="mt-4 font-medium text-slate-400">Sin citas para este día</p>
+                <button
+                  type="button"
+                  onClick={() => { const s = new Date(currentDate); s.setHours(9,0,0,0); const e = new Date(currentDate); e.setHours(9,30,0,0); openCreateForm(s.toISOString(), e.toISOString()); }}
+                  className="mt-4 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-500 hover:bg-slate-50"
+                >
+                  + Nueva cita
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2 max-w-2xl mx-auto">
+                {currentDayApts.map((apt) => {
+                  const statusMeta = getStatusMeta(apt.status);
+                  const treatmentName = apt.treatment_type || apt.treatment?.name || treatmentLabel(apt.treatment_id, treatments) || 'Cita general';
+                  return (
+                    <button key={apt.id} type="button"
+                      onClick={() => { setSelectedEventId(apt.id); setShowForm(false); }}
+                      className="w-full flex items-center gap-5 rounded-2xl border border-slate-100 bg-white p-4 text-left transition hover:border-slate-200 hover:shadow-sm">
+                      <div className="w-14 shrink-0 text-right">
+                        <p className="text-sm font-semibold text-slate-800">{new Date(apt.starts_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="text-[11px] text-slate-400">{getDurationLabel(apt.starts_at, apt.ends_at)}</p>
+                      </div>
+                      <div className="h-8 w-px shrink-0 bg-slate-100" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-slate-900 truncate">{toDisplayName(apt.patient, apt.patient_id)}</p>
+                        <p className="text-sm text-slate-500 truncate">{treatmentName}</p>
+                        <p className="text-xs text-slate-400">{apt.dentist?.name || dentistLabel(apt.dentist_id, dentists)}{apt.room ? ` · Sala ${apt.room}` : ''}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.badgeClass}`}>{statusMeta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Modal */}
+      {(showForm || selectedEventId !== null) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
+          <div
+            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+            onClick={() => {
+              setShowForm(false);
+              setSelectedEventId(null);
+              resetForm();
+            }}
+          />
+          <div className="relative z-10 w-full max-w-xl rounded-[2rem] bg-white p-6 shadow-2xl">
+            {renderSidePanel()}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

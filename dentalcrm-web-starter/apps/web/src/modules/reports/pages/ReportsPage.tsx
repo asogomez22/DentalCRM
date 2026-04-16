@@ -84,7 +84,7 @@ export function ReportsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Seguimiento</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Seguimiento</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Indicadores</h2>
         <p className="mt-2 text-sm text-slate-500">
           Resumen claro de actividad, ingresos y puntos de atencion de la clinica.
@@ -93,7 +93,7 @@ export function ReportsPage() {
 
       {isLoading && <p className="text-sm text-slate-500">Cargando reportes...</p>}
       {isError && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-rose-600">
           {(error as Error | undefined)?.message || 'No se pudieron cargar los reportes'}
         </p>
       )}

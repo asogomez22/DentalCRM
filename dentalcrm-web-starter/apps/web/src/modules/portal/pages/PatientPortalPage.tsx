@@ -377,8 +377,8 @@ export function PatientPortalPage() {
             <div className="panel rounded-[1.9rem] p-6">
               <h2 className="text-3xl text-slate-950">Siguiente cita</h2>
               {summary?.next_appointment ? (
-                <div className="mt-5 rounded-[1.7rem] border border-teal-100 bg-teal-50/90 p-5">
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+                <div className="mt-5 rounded-[1.7rem] border border-[var(--color-brand-soft)] bg-[var(--color-brand-soft)] p-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-brand)]">
                     {summary.next_appointment.treatment?.name || summary.next_appointment.treatment_type || 'Cita dental'}
                   </p>
                   <p className="mt-3 text-3xl font-semibold text-slate-950">{formatDateTime(summary.next_appointment.starts_at)}</p>
@@ -528,7 +528,7 @@ export function PatientPortalPage() {
                 <input value={referralForm.referred_email} onChange={(event) => setReferralForm((previous) => ({ ...previous, referred_email: event.target.value }))} className="w-full rounded-[1rem] border border-slate-300 bg-white/90 px-4 py-3.5" placeholder="Email" />
                 <input value={referralForm.referred_phone} onChange={(event) => setReferralForm((previous) => ({ ...previous, referred_phone: event.target.value }))} className="w-full rounded-[1rem] border border-slate-300 bg-white/90 px-4 py-3.5" placeholder="Telefono" />
               </div>
-              <button type="submit" disabled={referralMutation.isPending || !referralForm.referred_name.trim()} className="mt-5 rounded-[1rem] bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300">
+              <button type="submit" disabled={referralMutation.isPending || !referralForm.referred_name.trim()} className="mt-5 rounded-[1rem] bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300">
                 {referralMutation.isPending ? 'Enviando...' : 'Registrar referido'}
               </button>
               <div className="mt-4 space-y-3">

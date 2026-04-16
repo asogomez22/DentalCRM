@@ -182,7 +182,7 @@ export function CompliancePage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Privacidad</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Privacidad</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Privacidad y permisos</h2>
         <p className="mt-2 text-sm text-slate-500">
           Seguimiento de permisos, solicitudes de datos y actividad registrada del paciente.
@@ -200,83 +200,107 @@ export function CompliancePage() {
         <form onSubmit={handleConsentSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-950">Registrar permiso</h3>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <select
-              value={consentForm.patient_id}
-              onChange={(event) => setConsentForm((previous) => ({ ...previous, patient_id: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 md:col-span-2"
-            >
-              <option value="">Selecciona paciente</option>
-              {patients.map((patient) => (
-                <option key={patient.id} value={patient.id}>
-                  {patient.first_name} {patient.last_name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={consentForm.document_id}
-              onChange={(event) => setConsentForm((previous) => ({ ...previous, document_id: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-            >
-              <option value="">Documento opcional</option>
-              {documents.map((document) => (
-                <option key={document.id} value={document.id}>
-                  {document.original_name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={consentForm.type}
-              onChange={(event) =>
-                setConsentForm((previous) => ({ ...previous, type: event.target.value as ConsentRecord['type'] }))
-              }
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-            >
-              <option value="treatment">Tratamiento</option>
-              <option value="data_processing">Proteccion de datos</option>
-              <option value="marketing">Comunicaciones</option>
-            </select>
-            <select
-              value={consentForm.status}
-              onChange={(event) =>
-                setConsentForm((previous) => ({ ...previous, status: event.target.value as ConsentRecord['status'] }))
-              }
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-            >
-              <option value="pending">Pendiente</option>
-              <option value="signed">Firmado</option>
-              <option value="revoked">Retirado</option>
-            </select>
-            <input
-              value={consentForm.signature_name}
-              onChange={(event) => setConsentForm((previous) => ({ ...previous, signature_name: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-              placeholder="Nombre firma"
-            />
-            <input
-              type="datetime-local"
-              value={consentForm.signed_at}
-              onChange={(event) => setConsentForm((previous) => ({ ...previous, signed_at: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-            />
-            <input
-              type="date"
-              value={consentForm.retention_until}
-              onChange={(event) => setConsentForm((previous) => ({ ...previous, retention_until: event.target.value }))}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 md:col-span-2"
-            />
+            <label className="block space-y-1.5 md:col-span-2">
+              <span className="text-sm text-slate-600">Paciente</span>
+              <select
+                value={consentForm.patient_id}
+                onChange={(event) => setConsentForm((previous) => ({ ...previous, patient_id: event.target.value }))}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              >
+                <option value="">Selecciona paciente</option>
+                {patients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.first_name} {patient.last_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-sm text-slate-600">Documento asociado</span>
+              <select
+                value={consentForm.document_id}
+                onChange={(event) => setConsentForm((previous) => ({ ...previous, document_id: event.target.value }))}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              >
+                <option value="">Sin documento</option>
+                {documents.map((document) => (
+                  <option key={document.id} value={document.id}>
+                    {document.original_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-sm text-slate-600">Tipo de consentimiento</span>
+              <select
+                value={consentForm.type}
+                onChange={(event) =>
+                  setConsentForm((previous) => ({ ...previous, type: event.target.value as ConsentRecord['type'] }))
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              >
+                <option value="treatment">Tratamiento</option>
+                <option value="data_processing">Proteccion de datos</option>
+                <option value="marketing">Comunicaciones</option>
+              </select>
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-sm text-slate-600">Estado</span>
+              <select
+                value={consentForm.status}
+                onChange={(event) =>
+                  setConsentForm((previous) => ({ ...previous, status: event.target.value as ConsentRecord['status'] }))
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              >
+                <option value="pending">Pendiente</option>
+                <option value="signed">Firmado</option>
+                <option value="revoked">Retirado</option>
+              </select>
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-sm text-slate-600">Nombre en la firma</span>
+              <input
+                value={consentForm.signature_name}
+                onChange={(event) => setConsentForm((previous) => ({ ...previous, signature_name: event.target.value }))}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                placeholder="Nombre completo del firmante"
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-sm text-slate-600">Fecha de firma</span>
+              <input
+                type="datetime-local"
+                value={consentForm.signed_at}
+                onChange={(event) => setConsentForm((previous) => ({ ...previous, signed_at: event.target.value }))}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              />
+            </label>
+            <label className="block space-y-1.5 md:col-span-2">
+              <span className="text-sm text-slate-600">Conservar hasta</span>
+              <input
+                type="date"
+                value={consentForm.retention_until}
+                onChange={(event) => setConsentForm((previous) => ({ ...previous, retention_until: event.target.value }))}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              />
+            </label>
           </div>
 
-          <textarea
-            value={consentForm.content_snapshot}
-            onChange={(event) => setConsentForm((previous) => ({ ...previous, content_snapshot: event.target.value }))}
-            className="mt-4 min-h-32 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
-            placeholder="Texto o snapshot del consentimiento"
-          />
+          <label className="mt-4 block space-y-1.5">
+            <span className="text-sm text-slate-600">Contenido del consentimiento</span>
+            <textarea
+              value={consentForm.content_snapshot}
+              onChange={(event) => setConsentForm((previous) => ({ ...previous, content_snapshot: event.target.value }))}
+              className="min-h-32 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+              placeholder="Texto o extracto del documento de consentimiento"
+            />
+          </label>
 
           <button
             type="submit"
             disabled={createConsentMutation.isPending || !consentForm.patient_id}
-            className="mt-5 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300"
+            className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
           >
             {createConsentMutation.isPending ? 'Guardando...' : 'Guardar permiso'}
           </button>

@@ -316,7 +316,7 @@ export function OperationsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Operativa</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Operativa</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Operaciones</h2>
         <p className="mt-2 text-sm text-slate-500">
           Control de centros, proveedores, stock y compras para que no falte material.
@@ -359,12 +359,26 @@ export function OperationsPage() {
           >
             <h3 className="text-lg font-semibold text-slate-950">Nuevo centro</h3>
             <div className="mt-5 space-y-4">
-              <input value={locationForm.name} onChange={(event) => setLocationForm((previous) => ({ ...previous, name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Clinica Madrid Centro" />
-              <input value={locationForm.address} onChange={(event) => setLocationForm((previous) => ({ ...previous, address: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Direccion" />
-              <input value={locationForm.phone} onChange={(event) => setLocationForm((previous) => ({ ...previous, phone: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Telefono" />
-              <input value={locationForm.email} onChange={(event) => setLocationForm((previous) => ({ ...previous, email: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Email" />
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Nombre del centro</span>
+                <input value={locationForm.name} onChange={(event) => setLocationForm((previous) => ({ ...previous, name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Clinica Madrid Centro" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Direccion</span>
+                <input value={locationForm.address} onChange={(event) => setLocationForm((previous) => ({ ...previous, address: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Calle Mayor 1, Madrid" />
+              </label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block space-y-1.5">
+                  <span className="text-sm text-slate-600">Telefono</span>
+                  <input value={locationForm.phone} onChange={(event) => setLocationForm((previous) => ({ ...previous, phone: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="+34 91 000 00 00" />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm text-slate-600">Email</span>
+                  <input value={locationForm.email} onChange={(event) => setLocationForm((previous) => ({ ...previous, email: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="centro@clinica.com" />
+                </label>
+              </div>
             </div>
-            <button type="submit" disabled={createLocationMutation.isPending || !locationForm.name.trim()} className="mt-5 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300">
+            <button type="submit" disabled={createLocationMutation.isPending || !locationForm.name.trim()} className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300">
               {createLocationMutation.isPending ? 'Guardando...' : 'Guardar centro'}
             </button>
           </form>
@@ -384,13 +398,30 @@ export function OperationsPage() {
           >
             <h3 className="text-lg font-semibold text-slate-950">Nuevo proveedor</h3>
             <div className="mt-5 space-y-4">
-              <input value={supplierForm.name} onChange={(event) => setSupplierForm((previous) => ({ ...previous, name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Proveedor" />
-              <input value={supplierForm.contact_name} onChange={(event) => setSupplierForm((previous) => ({ ...previous, contact_name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Contacto" />
-              <input value={supplierForm.email} onChange={(event) => setSupplierForm((previous) => ({ ...previous, email: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Email" />
-              <input value={supplierForm.phone} onChange={(event) => setSupplierForm((previous) => ({ ...previous, phone: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Telefono" />
-              <textarea value={supplierForm.notes} onChange={(event) => setSupplierForm((previous) => ({ ...previous, notes: event.target.value }))} className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Condiciones, SLA, observaciones" />
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Nombre del proveedor</span>
+                <input value={supplierForm.name} onChange={(event) => setSupplierForm((previous) => ({ ...previous, name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Dental Supply SL" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Persona de contacto</span>
+                <input value={supplierForm.contact_name} onChange={(event) => setSupplierForm((previous) => ({ ...previous, contact_name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Juan Garcia" />
+              </label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block space-y-1.5">
+                  <span className="text-sm text-slate-600">Email</span>
+                  <input value={supplierForm.email} onChange={(event) => setSupplierForm((previous) => ({ ...previous, email: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="pedidos@proveedor.com" />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm text-slate-600">Telefono</span>
+                  <input value={supplierForm.phone} onChange={(event) => setSupplierForm((previous) => ({ ...previous, phone: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="+34 91 000 00 00" />
+                </label>
+              </div>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Notas</span>
+                <textarea value={supplierForm.notes} onChange={(event) => setSupplierForm((previous) => ({ ...previous, notes: event.target.value }))} className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Condiciones, SLA, observaciones" />
+              </label>
             </div>
-            <button type="submit" disabled={createSupplierMutation.isPending || !supplierForm.name.trim()} className="mt-5 rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300">
+            <button type="submit" disabled={createSupplierMutation.isPending || !supplierForm.name.trim()} className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300">
               {createSupplierMutation.isPending ? 'Guardando...' : 'Crear proveedor'}
             </button>
           </form>
@@ -400,35 +431,62 @@ export function OperationsPage() {
           <form onSubmit={handleInventoryItemSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-slate-950">Nuevo articulo</h3>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <input value={inventoryItemForm.name} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Nombre del item" />
-              <input value={inventoryItemForm.category} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, category: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Categoria" />
-              <input value={inventoryItemForm.unit} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, unit: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Unidad" />
-              <select value={inventoryItemForm.valuation_method} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, valuation_method: event.target.value as InventoryItem['valuation_method'] }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3">
-                <option value="average">Coste medio</option>
-                <option value="fifo">Primero en entrar</option>
-                <option value="lifo">Ultimo en entrar</option>
-              </select>
-              <input type="number" min="0" step="0.1" value={inventoryItemForm.stock_quantity} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, stock_quantity: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Stock" />
-              <input type="number" min="0" step="0.1" value={inventoryItemForm.reorder_level} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, reorder_level: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Minimo recomendado" />
-              <input type="number" min="0" step="0.01" value={inventoryItemForm.unit_cost} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, unit_cost: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Coste unitario" />
-              <select value={inventoryItemForm.location_id} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, location_id: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3">
-                <option value="">Sin sede</option>
-                {locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
-              <select value={inventoryItemForm.supplier_id} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, supplier_id: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 md:col-span-2">
-                <option value="">Sin proveedor principal</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </option>
-                ))}
-              </select>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Nombre</span>
+                <input value={inventoryItemForm.name} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, name: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Guantes de nitrilo" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Categoria</span>
+                <input value={inventoryItemForm.category} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, category: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Fungibles, material clinico..." />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Unidad</span>
+                <input value={inventoryItemForm.unit} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, unit: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="uds, caja, ml..." />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Metodo de valoracion</span>
+                <select value={inventoryItemForm.valuation_method} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, valuation_method: event.target.value as InventoryItem['valuation_method'] }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3">
+                  <option value="average">Coste medio</option>
+                  <option value="fifo">Primero en entrar</option>
+                  <option value="lifo">Ultimo en entrar</option>
+                </select>
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Stock actual</span>
+                <input type="number" min="0" step="0.1" value={inventoryItemForm.stock_quantity} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, stock_quantity: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="0" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Minimo recomendado</span>
+                <input type="number" min="0" step="0.1" value={inventoryItemForm.reorder_level} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, reorder_level: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="0" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Coste unitario (€)</span>
+                <input type="number" min="0" step="0.01" value={inventoryItemForm.unit_cost} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, unit_cost: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="0.00" />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm text-slate-600">Sede</span>
+                <select value={inventoryItemForm.location_id} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, location_id: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3">
+                  <option value="">Sin sede asignada</option>
+                  {locations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block space-y-1.5 md:col-span-2">
+                <span className="text-sm text-slate-600">Proveedor principal</span>
+                <select value={inventoryItemForm.supplier_id} onChange={(event) => setInventoryItemForm((previous) => ({ ...previous, supplier_id: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3">
+                  <option value="">Sin proveedor principal</option>
+                  {suppliers.map((supplier) => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            <button type="submit" disabled={createInventoryItemMutation.isPending || !inventoryItemForm.name.trim() || !inventoryItemForm.category.trim()} className="mt-5 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300">
+            <button type="submit" disabled={createInventoryItemMutation.isPending || !inventoryItemForm.name.trim() || !inventoryItemForm.category.trim()} className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300">
               {createInventoryItemMutation.isPending ? 'Guardando...' : 'Guardar articulo'}
             </button>
           </form>
@@ -466,7 +524,7 @@ export function OperationsPage() {
                 <input type="number" min="0" step="0.01" value={stockMovementForm.unit_cost} onChange={(event) => setStockMovementForm((previous) => ({ ...previous, unit_cost: event.target.value }))} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Coste unitario" />
                 <textarea value={stockMovementForm.notes} onChange={(event) => setStockMovementForm((previous) => ({ ...previous, notes: event.target.value }))} className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Motivo o referencia" />
               </div>
-              <button type="submit" disabled={createStockMovementMutation.isPending || !stockMovementForm.inventory_item_id} className="mt-5 rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300">
+              <button type="submit" disabled={createStockMovementMutation.isPending || !stockMovementForm.inventory_item_id} className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300">
                 {createStockMovementMutation.isPending ? 'Registrando...' : 'Registrar movimiento'}
               </button>
             </form>
@@ -543,7 +601,7 @@ export function OperationsPage() {
               </div>
 
               <textarea value={purchaseOrderForm.notes} onChange={(event) => setPurchaseOrderForm((previous) => ({ ...previous, notes: event.target.value }))} className="mt-4 min-h-24 w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Notas de compra" />
-              <button type="submit" disabled={createPurchaseOrderMutation.isPending || purchaseOrderForm.items.some((item) => !item.description.trim())} className="mt-5 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300">
+              <button type="submit" disabled={createPurchaseOrderMutation.isPending || purchaseOrderForm.items.some((item) => !item.description.trim())} className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300">
                 {createPurchaseOrderMutation.isPending ? 'Creando...' : 'Crear orden'}
               </button>
             </form>

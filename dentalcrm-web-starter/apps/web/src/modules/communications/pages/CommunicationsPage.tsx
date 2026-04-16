@@ -304,7 +304,7 @@ export function CommunicationsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-teal-700">Mensajes</p>
+        <p className="text-sm font-medium text-[var(--color-brand)]">Mensajes</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Comunicaciones</h2>
         <p className="mt-2 text-sm text-slate-500">
           Mensajes, recordatorios y seguimiento del paciente desde un solo sitio.
@@ -407,13 +407,13 @@ export function CommunicationsPage() {
           <button
             type="submit"
             disabled={createTemplateMutation.isPending || !templateForm.name.trim() || !templateForm.body.trim()}
-            className="mt-5 rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
+            className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
           >
             {createTemplateMutation.isPending ? 'Guardando...' : 'Guardar plantilla'}
           </button>
 
           {createTemplateMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(createTemplateMutation.error as Error | undefined)?.message || 'No se pudo guardar la plantilla'}
             </p>
           )}
@@ -504,13 +504,13 @@ export function CommunicationsPage() {
           <button
             type="submit"
             disabled={createCampaignMutation.isPending || !campaignForm.name.trim() || !campaignForm.body.trim()}
-            className="mt-5 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300"
+            className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
           >
             {createCampaignMutation.isPending ? 'Creando...' : 'Guardar campana'}
           </button>
 
           {createCampaignMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(createCampaignMutation.error as Error | undefined)?.message || 'No se pudo guardar la campana'}
             </p>
           )}
@@ -706,13 +706,13 @@ export function CommunicationsPage() {
           <button
             type="submit"
             disabled={createLogMutation.isPending || !logForm.patient_id || !logForm.body.trim()}
-            className="mt-5 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300"
+            className="mt-5 rounded-xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-dark)] disabled:bg-slate-300"
           >
             {createLogMutation.isPending ? 'Registrando...' : 'Guardar registro'}
           </button>
 
           {createLogMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">
+            <p className="mt-3 text-sm text-rose-600">
               {(createLogMutation.error as Error | undefined)?.message || 'No se pudo guardar el registro'}
             </p>
           )}
